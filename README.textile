@@ -1,0 +1,160 @@
+h1. beholder.lua
+
+A simple event observer for Lua. Can be used with "middleclass":https://github.com/kikito/middleclass
+
+h1. Example
+
+<pre>
+Beholder = require 'beholder'
+
+...
+
+local goblin1 = {x=100, y=100}
+goblin1.pauseId = Beholder:observe("PAUSE", function() goblin1.paused = true end)
+
+...
+
+local goblin2 = {x=200, y=100}
+goblin2.pauseId = Beholder:observe("PAUSE", function() goblin2.paused = true end)
+
+...
+
+
+function pauseButtonPressed()
+  Beholder:trigger("PAUSE")
+end
+
+
+...
+
+function updateGoblin(goblin)
+  if goblin.paused then
+    return "zzz"
+  else
+    return "waaargh!"
+  end
+end
+
+...
+
+function destroyGoblin(goblin)
+  Beholder:stopObserving(goblin.pauseId)
+end
+</pre>
+
+
+h1. Explanation
+
+This library tries to solve the following problem: some actions need to be executed when some asynchronous condition is fulfilled. By "asyncronous" we mean that it something that typically doesn't depend on the code - like user interaction. Hence precalculating it beforehand is impractical.
+
+Some examples:
+
+* The pause menu is brought up, and all the actors in your videogame need to be frozen.
+* An image has item has been loaded from disk, and a progress bar needs to be updated.
+* The user presses certain combination of keys.
+
+The way these problems are typically handed is by continuously polling for the trigger condition. For example, on the pause menu, one would find this code on the enemy movement routines:
+
+<pre>
+if pause_menu_is_up then
+  -- do the pause-related stuff
+else
+  -- do the non-pause related stuff.
+end
+</pre>
+
+You will have a code similar to that on each part that needs to be stopped: on your enemy code, the bullet code, the player code, etc.
+
+But the biggest problem with that code is lack of separation. The code dealign with your goblins should only deal with goblin stuff. It should not "know" about the menu system, or the keyboard actions, or the file loader. And the same goes with your bullet code, player code, etc. They don't need to know about exernal systems, such as the keyboard.
+
+This library allows you to build "walls" between them: your keyboard code will just raise signals, and your player code will listen to those signals. This allows for better encapsulation; if you later add multiplayer functionality, for example, the network module will just have to raise the correct signals just like the keyboard module does; your player logic will be unaffected.
+
+h1. Signal specificity
+
+Signals can be any Lua object. On the example above, the signal used was the string "PAUSE". It could also be a number, a function or a table.
+
+On the particular case of tables, there's some extra functionality implemented: triggering a table will execute the actions associated to tables equal to itself, or are less specific.
+
+For example, this trigger:
+
+<pre>Beholder:trigger({'PLAYERDETECTION', player1, 100, 200})</pre>
+
+Will trigger this action:
+
+<pre>Beholder:observe({'PLAYERDETECTION', player1, 100, 200}, function() print("player1 detected at 100, 200") end)</pre>
+
+But also this other one:
+
+<pre>Beholder:trigger({'PLAYERDETECTION', player1}, function(x,y) print("player1 detected at ",x,y)</pre>
+
+Notice that the two "missing elements" of the table will be passed to the callback as additional parameters. Indeed, that second d action will be executed any time player1 is detected, no matter what coordinates.
+
+Similarly, you can add an action that will be triggered for any player detection:
+
+<pre>Beholder:trigger({'PLAYERDETECTION'}, function(player,x,y) print(player.no," detected at ",x,y)</pre>
+
+As a matter of fact, that code would be exactly equivalent to this other code:
+
+<pre>Beholder:trigger('PLAYERDETECTION', function(player,x,y) print(player.no," detected at ",x,y)</pre>
+
+If you want to detect all signals raised (i.e. for logging and debugging) you can do so by observing the empty table:
+
+<pre>Beholder:observe({}, function(...) log("Event triggered", ...) end)</pre>
+
+
+h1. Beholder.mixin - Integration with Middleclass
+
+This library includes mixin that can be used with "middleclass":https://github.com/kikito/middleclass . The usege of Middleclass, or that mixin, is completely optional. It allows middleclass instances to observe events more easily. Example:
+
+<pre>
+require 'middleclass'
+Beholder = require 'beholder'
+
+local  = class('Goblin'):include(Beholder.mixin)
+
+function Goblin:initialize(x,y)
+  self.x, self.y = x,y
+  self:observe("PAUSE", 'pause') -- method name used here
+end
+
+function Goblin:pause()
+  self.paused = true
+end
+
+function Goblin:destroy()
+  self:stopObserving("PAUSE") -- notice that we didn't have to use an id here
+end
+</pre>
+
+Notice how the second parameter of the observe call above is a method name instead of a function. Functions also work just fine:
+
+<pre>self:observe("PAUSE", function(self) self['paused'](self) end)</pre>
+
+The other trick here is that when an instance observes a signal, it secretly "adds itself" to the signal, making it more specific. In other words, the observe call above is equivalent to this one:
+
+<pre>Beholder:observe({"PAUSE", self}, function(self) self['paused'](self) end)</pre>
+
+In addition to all of the above, note how it's possible to stop observing the trigger itself, instead of the "eye", as it happened before. This is due to the fact that instances can be used to uniquely identify triggers. The "middleclass-less" version of Beholder, nowever, needs to "create an unique identifier" in order to be able to identify each new observer.
+
+
+h1. Installation
+
+If you are going to use it, make sure that you have downloaded and installed "middleclass":https://github.com/kikito/middleclass
+
+Just copy the beholder.lua file wherever you want it (for example on a lib/ folder). Then write this in any Lua file where you want to use it:
+
+<pre>local Beholder = require 'beholder'</pre>
+
+On this example I've assigned it to a local variable. If you are going to use Beholder across multiple files, it's better to require the file just once and make the variable global.
+
+The @package.path@ variable must be configured so that the folder in which beholder.lua is copied is available, of course.
+
+Please make sure that you read the license, too (for your convenience it's now included at the beginning of the middleclass.lua file).
+
+h1. Specs
+
+This project uses "telescope":https://github.com/norman/telescope for its specs. If you want to run the specs, you will have to install telescope first. Then just execute the following from the root inspect folder:
+
+<pre>
+tsc -f spec/*.lua
+</pre>
