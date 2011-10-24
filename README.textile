@@ -5,23 +5,23 @@ A simple event observer for Lua. Can be used with "middleclass":https://github.c
 h1. Example
 
 <pre>
-Beholder = require 'beholder'
+beholder = require 'beholder'
 
 ...
 
 local goblin1 = {x=100, y=100}
-goblin1.pauseId = Beholder:observe("PAUSE", function() goblin1.paused = true end)
+goblin1.pauseId = beholder:observe("PAUSE", function() goblin1.paused = true end)
 
 ...
 
 local goblin2 = {x=200, y=100}
-goblin2.pauseId = Beholder:observe("PAUSE", function() goblin2.paused = true end)
+goblin2.pauseId = beholder:observe("PAUSE", function() goblin2.paused = true end)
 
 ...
 
 
 function pauseButtonPressed()
-  Beholder:trigger("PAUSE")
+  beholder:trigger("PAUSE")
 end
 
 
@@ -38,10 +38,11 @@ end
 ...
 
 function destroyGoblin(goblin)
-  Beholder:stopObserving(goblin.pauseId)
+  beholder:stopObserving(goblin.pauseId)
 end
 </pre>
 
+(Note: if you are doing lots of that "if whatever.state then ..." you might want to give a look to "stateful.lua":http://github.com/kikito/stateful.lua )
 
 h1. Explanation
 
@@ -108,9 +109,9 @@ This library includes mixin that can be used with "middleclass":https://github.c
 
 <pre>
 require 'middleclass'
-Beholder = require 'beholder'
+beholder = require 'beholder'
 
-local  = class('Goblin'):include(Beholder.mixin)
+local  = class('Goblin'):include(beholder.mixin)
 
 function Goblin:initialize(x,y)
   self.x, self.y = x,y
