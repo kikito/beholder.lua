@@ -13,6 +13,16 @@ describe("Unit", function()
       beholder:trigger("EVENT")
       assert_equal(counter, 1)
     end)
+
+    it("remembers if more than one action is associated to the same event", function()
+      local counter1, counter2 = 0,0
+      beholder:observe("EVENT", function() counter1 = counter1 + 1 end)
+      beholder:observe("EVENT", function() counter2 = counter2 + 1 end)
+      beholder:trigger("EVENT")
+      assert_equal(counter1, 1)
+      assert_equal(counter2, 1)
+    end)
+
   end)
 
   describe(":stopObserving", function()
@@ -23,6 +33,22 @@ describe("Unit", function()
       beholder:stopObserving(id)
       beholder:trigger("EVENT")
       assert_equal(counter, 1)
+    end)
+
+    it("when given an id, it stops observing it", function()
+      local counter1, counter2 = 0,0
+      local id1 = beholder:observe("EVENT", function() counter1 = counter1 + 1 end)
+      beholder:observe("EVENT", function() counter2 = counter2 + 1 end)
+      beholder:trigger("EVENT")
+
+      assert_equal(counter1, 1)
+      assert_equal(counter2, 1)
+      beholder:stopObserving(id1)
+      beholder:trigger("EVENT")
+
+      assert_equal(counter1, 1)
+      assert_equal(counter2, 2)
+
     end)
   end)
 

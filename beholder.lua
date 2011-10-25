@@ -7,26 +7,33 @@
 -- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 -- Based on YaciCode, from Julien Patte and LuaObject, from Sebastien Rocca-Serra
 
-local beholder = { actions = {} }
-
+local beholder = {}
 
 function beholder:reset()
-  self.actions = {}
+  self._actions = {}
+  self._ids = {}
 end
 
 function beholder:observe(event, action)
-  self.actions[event] = action
-  return event
+  local id = {}
+  self._actions[event] = self._actions[event] or {}
+  self._actions[event][id] = action
+  self._ids[id] = event
+  return id
 end
 
 function beholder:stopObserving(id)
-  self.actions[id] = nil
+  local event = self._ids[id]
+  self._actions[event][id] = nil
 end
 
 function beholder:trigger(event)
-  local action = self.actions[event]
-  if action then action() end
+  local actions = self._actions[event] or {}
+  for _,action in pairs(actions) do
+    action()
+  end
 end
 
+beholder:reset()
 
 return beholder
