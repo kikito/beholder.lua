@@ -86,17 +86,17 @@ Will trigger this action:
 
 But also this other one:
 
-<pre>Beholder:trigger({'PLAYERDETECTION', player1}, function(x,y) print("player1 detected at ",x,y)</pre>
+<pre>Beholder:observe({'PLAYERDETECTION', player1}, function(x,y) print("player1 detected at ",x,y)</pre>
 
 Notice that the two "missing elements" of the table will be passed to the callback as additional parameters. Indeed, that second d action will be executed any time player1 is detected, no matter what coordinates.
 
 Similarly, you can add an action that will be triggered for any player detection:
 
-<pre>Beholder:trigger({'PLAYERDETECTION'}, function(player,x,y) print(player.no," detected at ",x,y)</pre>
+<pre>Beholder:observe({'PLAYERDETECTION'}, function(player,x,y) print(player.no," detected at ",x,y)</pre>
 
 As a matter of fact, that code would be exactly equivalent to this other code:
 
-<pre>Beholder:trigger('PLAYERDETECTION', function(player,x,y) print(player.no," detected at ",x,y)</pre>
+<pre>Beholder:observe('PLAYERDETECTION', function(player,x,y) print(player.no," detected at ",x,y)</pre>
 
 If you want to detect all signals raised (i.e. for logging and debugging) you can do so by observing the empty table:
 
