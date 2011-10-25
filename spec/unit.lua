@@ -50,6 +50,18 @@ describe("Unit", function()
       assert_equal(counter2, 2)
 
     end)
+
+    it("passes parameters to the actions", function()
+      local counter = 0
+
+      beholder:observe("EVENT", function(x) counter = counter + x end)
+      beholder:trigger("EVENT", 1)
+
+      assert_equal(counter, 1)
+      beholder:trigger("EVENT", 5)
+
+      assert_equal(counter, 6)
+    end)
   end)
 
 

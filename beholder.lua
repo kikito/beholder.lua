@@ -25,12 +25,13 @@ end
 function beholder:stopObserving(id)
   local event = self._ids[id]
   self._actions[event][id] = nil
+  self._ids[id]=nil
 end
 
-function beholder:trigger(event)
+function beholder:trigger(event,...)
   local actions = self._actions[event] or {}
   for _,action in pairs(actions) do
-    action()
+    action(...)
   end
 end
 
