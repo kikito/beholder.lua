@@ -19,7 +19,7 @@ local function findNodeById(self, id)
 end
 
 local function createNode(self, event)
-  self._nodes[event] = {}
+  self._nodes[event] = {actions = {}}
   return self._nodes[event]
 end
 
@@ -29,13 +29,13 @@ end
 
 local function registerActionInNode(self, node, action)
   local id = {}
-  node[id] = action
+  node.actions[id] = action
   self._ids[id] = node
   return id
 end
 
 local function unregisterActionFromNode(self, node, id)
-  node[id] = nil
+  node.actions[id] = nil
   self._ids[id] = nil
 end
 
@@ -54,7 +54,7 @@ end
 
 function beholder:trigger(event,...)
   local node = findNode(self, event) or {}
-  for _,action in pairs(node) do
+  for _,action in pairs(node.actions) do
     action(...)
   end
 end
