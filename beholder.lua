@@ -53,8 +53,8 @@ function beholder:stopObserving(id)
 end
 
 function beholder:trigger(event,...)
-  local actions = self._nodes[event] or {}
-  for _,action in pairs(actions) do
+  local node = findNode(self, event) or {}
+  for _,action in pairs(node) do
     action(...)
   end
 end
