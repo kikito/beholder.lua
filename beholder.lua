@@ -9,27 +9,51 @@
 
 local beholder = {}
 
+
+local function findNode(self, event)
+  return self._nodes[event]
+end
+
+local function findNodeById(self, id)
+  return self._ids[id]
+end
+
+local function createNode(self, event)
+  self._nodes[event] = {}
+  return self._nodes[event]
+end
+
+local function findOrCreateNode(self, event)
+  return findNode(self, event) or createNode(self, event)
+end
+
+local function registerActionInNode(self, node, action)
+  local id = {}
+  node[id] = action
+  self._ids[id] = node
+  return id
+end
+
+local function unregisterActionFromNode(self, node, id)
+  node[id] = nil
+  self._ids[id] = nil
+end
+
 function beholder:reset()
-  self._actions = {}
+  self._nodes = {}
   self._ids = {}
 end
 
 function beholder:observe(event, action)
-  local id = {}
-  self._actions[event] = self._actions[event] or {}
-  self._actions[event][id] = action
-  self._ids[id] = event
-  return id
+  return registerActionInNode(self, findOrCreateNode(self, event), action)
 end
 
 function beholder:stopObserving(id)
-  local event = self._ids[id]
-  self._actions[event][id] = nil
-  self._ids[id]=nil
+  unregisterActionFromNode(self, findNodeById(self, id), id)
 end
 
 function beholder:trigger(event,...)
-  local actions = self._actions[event] or {}
+  local actions = self._nodes[event] or {}
   for _,action in pairs(actions) do
     action(...)
   end
