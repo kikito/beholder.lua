@@ -46,7 +46,7 @@ end
 
 h1. Explanation
 
-This library tries to solve the following problem: some actions need to be executed when some asynchronous condition is fulfilled. By "asyncronous" we mean that it something that typically doesn't depend on the code - like user interaction. Hence precalculating it beforehand is impractical.
+This library tries to solve the following problem: some actions need to be executed when some asynchronous condition is fulfilled. By "asyncronous" we mean that it something that typically doesn't depend on the code. Hence precalculating it beforehand is impractical.
 
 Some examples:
 
@@ -68,39 +68,35 @@ You will have a code similar to that on each part that needs to be stopped: on y
 
 But the biggest problem with that code is lack of separation. The code dealign with your goblins should only deal with goblin stuff. It should not "know" about the menu system, or the keyboard actions, or the file loader. And the same goes with your bullet code, player code, etc. They don't need to know about exernal systems, such as the keyboard.
 
-This library allows you to build "walls" between them: your keyboard code will just raise signals, and your player code will listen to those signals. This allows for better encapsulation; if you later add multiplayer functionality, for example, the network module will just have to raise the correct signals just like the keyboard module does; your player logic will be unaffected.
+This library allows you to build "walls" between them: your keyboard code will just raise events, and your player code will observe those events. This allows for better encapsulation; if you later add multiplayer functionality, for example, the network module will just have to raise the same events just like the keyboard module did; your player logic will be unaffected.
 
-h1. Signal specificity
+You can obviously attach any number of observers to any given event. Similarly, you are
 
-Signals can be any Lua object. On the example above, the signal used was the string "PAUSE". It could also be a number, a function or a table.
+h1. Composed events
 
-On the particular case of tables, there's some extra functionality implemented: triggering a table will execute the actions associated to tables equal to itself, or are less specific.
+Events can be any type of Lua object. On the example, we used the "PAUSE" string. It could also be a number, a function or a table. The == operator is used in all cases.
 
-For example, this trigger:
+Composed events are built from more than one lua object. You can do them by simply adding more parameters to the observe/trigger functions. For example, this trigger:
 
-<pre>Beholder:trigger({'PLAYERDETECTION', player1, 100, 200})</pre>
+<pre>Beholder:trigger('PLAYERDETECTION', player1, 100, 200)</pre>
 
 Will trigger this action:
 
-<pre>Beholder:observe({'PLAYERDETECTION', player1, 100, 200}, function() print("player1 detected at 100, 200") end)</pre>
+<pre>Beholder:observe('PLAYERDETECTION', player1, 100, 200, function() print("player1 detected at 100, 200") end)</pre>
 
-But also this other one:
+Composed events are inclusive. This means that this other observer will also get activated by the aforementioned trigger.
 
-<pre>Beholder:observe({'PLAYERDETECTION', player1}, function(x,y) print("player1 detected at ",x,y)</pre>
+<pre>Beholder:observe('PLAYERDETECTION', player1, function(x,y) print("player1 detected at ",x,y)</pre>
 
-Notice that the two "missing elements" of the table will be passed to the callback as additional parameters. Indeed, that second d action will be executed any time player1 is detected, no matter what coordinates.
+Notice that the two "non-observed integers" will be passed to the callback as additional parameters. That second action will be executed any time player1 is detected, no matter what coordinates.
 
 Similarly, you can add an action that will be triggered for any player detection:
 
-<pre>Beholder:observe({'PLAYERDETECTION'}, function(player,x,y) print(player.no," detected at ",x,y)</pre>
-
-As a matter of fact, that code would be exactly equivalent to this other code:
-
 <pre>Beholder:observe('PLAYERDETECTION', function(player,x,y) print(player.no," detected at ",x,y)</pre>
 
-If you want to detect all signals raised (i.e. for logging and debugging) you can do so by observing the empty table:
+If you want to detect all signals raised (i.e. for logging and debugging) you can do so by observing the "empty" event - simply pass a function to observe:
 
-<pre>Beholder:observe({}, function(...) log("Event triggered", ...) end)</pre>
+<pre>Beholder:observe(function(...) log("Event triggered", ...) end)</pre>
 
 
 h1. Beholder.mixin - Integration with Middleclass
@@ -133,7 +129,7 @@ Notice how the second parameter of the observe call above is a method name inste
 
 The other trick here is that when an instance observes a signal, it secretly "adds itself" to the signal, making it more specific. In other words, the observe call above is equivalent to this one:
 
-<pre>Beholder:observe({"PAUSE", self}, function(self) self['paused'](self) end)</pre>
+<pre>Beholder:observe("PAUSE", self, function(self) self['paused'](self) end)</pre>
 
 In addition to all of the above, note how it's possible to stop observing the trigger itself, instead of the "eye", as it happened before. This is due to the fact that instances can be used to uniquely identify triggers. The "middleclass-less" version of Beholder, nowever, needs to "create an unique identifier" in order to be able to identify each new observer.
 
