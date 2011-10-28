@@ -52,17 +52,6 @@ describe("Acceptance", function()
     assert_equal(counter2, 3)
 
   end)
---[[
-  test("callback parameters", function()
-    local counter = 0
-
-    beholder:observe("EVENT", function(x) counter = counter + x end)
-    beholder:trigger("EVENT", 1)
-    assert_equal(counter, 1)
-
-    beholder:trigger("EVENT", 5)
-    assert_equal(counter, 6)
-  end)
 
   test("composed events", function()
     local counter = 0
@@ -87,6 +76,5 @@ describe("Acceptance", function()
     assert_false(escapePressed)
   end)
 
-]]
 
 end)

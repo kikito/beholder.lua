@@ -22,29 +22,6 @@ describe("Unit", function()
       assert_equal(counter1, 1)
       assert_equal(counter2, 1)
     end)
---[[
-    describe("when observing a table", function()
-      local counter
-      before(function()
-        counter = 0
-        beholder:observe({"KEYPRESS", "enter"}, function() counter = counter + 1 end)
-      end)
-
-      it("matches a trigger of a structurally identical table", function()
-        beholder:trigger({"KEYPRESS", "enter"})
-        assert_equal(counter, 1)
-      end)
-
-      it("matches a trigger of a structurally identical params list", function()
-        beholder:trigger("KEYPRESS", "enter")
-        assert_equal(counter, 1)
-      end)
-
-      --it("triggering partials does not ", function()
-      --end)
-
-    end)
-]]
   end)
 
   describe(":stopObserving", function()
@@ -72,7 +49,7 @@ describe("Unit", function()
       assert_equal(counter2, 2)
 
     end)
---[[
+
     it("passes parameters to the actions", function()
       local counter = 0
 
@@ -84,7 +61,20 @@ describe("Unit", function()
 
       assert_equal(counter, 6)
     end)
-]]
+
+    it("does not raise an error when stopping observing an inexisting event", function()
+      assert_not_error(function() beholder:stopObserving({}) end)
+    end)
+
+    it("returns false when no action was found for an id", function()
+      assert_equal(false, beholder:stopObserving({}))
+    end)
+
+    it("returns true when an action was found and removed", function()
+      local id = beholder:observe("X", function() end)
+      assert_true(beholder:stopObserving(id))
+    end)
+
   end)
 
 

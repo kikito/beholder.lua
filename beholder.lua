@@ -14,6 +14,10 @@ local function findNode(self, event)
   return self._nodes[event]
 end
 
+local function findNodeById(self, id)
+  return self._nodesById[id]
+end
+
 local function createNode(self, event)
   self._nodes[event] = {actions={}}
   return self._nodes[event]
@@ -30,8 +34,14 @@ local function addActionToNode(self, node, action)
   return id
 end
 
-local function executeNodeActions(node)
-  for _,action in pairs(node.actions) do action() end
+local function removeActionFromNode(node, id)
+  if not node then return false end
+  node.actions[id] = nil
+  return true
+end
+
+local function executeNodeActions(node, ...)
+  for _,action in pairs(node.actions) do action(...) end
 end
 
 function beholder:reset()
@@ -44,13 +54,12 @@ function beholder:observe(event, action)
 end
 
 function beholder:stopObserving(id)
-  local node = self._nodesById[id]
-  node.actions[id] = nil
+  return removeActionFromNode(findNodeById(self, id), id)
 end
 
-function beholder:trigger(event)
+function beholder:trigger(event, ...)
   local node = findNode(self, event)
-  if node then executeNodeActions(node) end
+  if node then executeNodeActions(node, ...) end
 end
 
 beholder:reset()
