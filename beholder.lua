@@ -14,49 +14,43 @@ local function findNode(self, event)
   return self._nodes[event]
 end
 
-local function findNodeById(self, id)
-  return self._ids[id]
-end
-
 local function createNode(self, event)
-  self._nodes[event] = {actions = {}}
+  self._nodes[event] = {actions={}}
   return self._nodes[event]
 end
 
 local function findOrCreateNode(self, event)
-  return findNode(self, event) or createNode(self, event)
+  return findNode(self,event) or createNode(self,event)
 end
 
-local function registerActionInNode(self, node, action)
+local function addActionToNode(self, node, action)
   local id = {}
   node.actions[id] = action
-  self._ids[id] = node
+  self._nodesById[id] = node
   return id
 end
 
-local function unregisterActionFromNode(self, node, id)
-  node.actions[id] = nil
-  self._ids[id] = nil
+local function executeNodeActions(node)
+  for _,action in pairs(node.actions) do action() end
 end
 
 function beholder:reset()
   self._nodes = {}
-  self._ids = {}
+  self._nodesById = setmetatable({}, {__mode="k"})
 end
 
 function beholder:observe(event, action)
-  return registerActionInNode(self, findOrCreateNode(self, event), action)
+  return addActionToNode(self, findOrCreateNode(self, event), action)
 end
 
 function beholder:stopObserving(id)
-  unregisterActionFromNode(self, findNodeById(self, id), id)
+  local node = self._nodesById[id]
+  node.actions[id] = nil
 end
 
-function beholder:trigger(event,...)
-  local node = findNode(self, event) or {}
-  for _,action in pairs(node.actions) do
-    action(...)
-  end
+function beholder:trigger(event)
+  local node = findNode(self, event)
+  if node then executeNodeActions(node) end
 end
 
 beholder:reset()
