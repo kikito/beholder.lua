@@ -44,7 +44,7 @@ end
 
 (Note: if you are doing lots of that "if whatever.state then ..." you might want to give a look to "stateful.lua":http://github.com/kikito/stateful.lua )
 
-h1. Explanation
+h1. Why?
 
 This library tries to solve the following problem: some actions need to be executed when some asynchronous condition is fulfilled. By "asyncronous" we mean that it something that typically doesn't depend on the code. Hence precalculating it beforehand is impractical.
 
@@ -94,45 +94,13 @@ Similarly, you can add an action that will be triggered for any player detection
 
 <pre>Beholder:observe('PLAYERDETECTION', function(player,x,y) print(player.no," detected at ",x,y)</pre>
 
-If you want to detect all signals raised (i.e. for logging and debugging) you can do so by observing the "empty" event - simply pass a function to observe:
+If you want to detect all signals raised (i.e. for logging and debugging) you can do so by observing the "empty" event - simply pass a function to observe, without adding any more params:
 
 <pre>Beholder:observe(function(...) log("Event triggered", ...) end)</pre>
 
+Similarly, you could use this to trigger all observed events (again, this will be useful mostly for debugging):
 
-h1. Beholder.mixin - Integration with Middleclass
-
-This library includes mixin that can be used with "middleclass":https://github.com/kikito/middleclass . The usege of Middleclass, or that mixin, is completely optional. It allows middleclass instances to observe events more easily. Example:
-
-<pre>
-require 'middleclass'
-beholder = require 'beholder'
-
-local  = class('Goblin'):include(beholder.mixin)
-
-function Goblin:initialize(x,y)
-  self.x, self.y = x,y
-  self:observe("PAUSE", 'pause') -- method name used here
-end
-
-function Goblin:pause()
-  self.paused = true
-end
-
-function Goblin:destroy()
-  self:stopObserving("PAUSE") -- notice that we didn't have to use an id here
-end
-</pre>
-
-Notice how the second parameter of the observe call above is a method name instead of a function. Functions also work just fine:
-
-<pre>self:observe("PAUSE", function(self) self['paused'](self) end)</pre>
-
-The other trick here is that when an instance observes a signal, it secretly "adds itself" to the signal, making it more specific. In other words, the observe call above is equivalent to this one:
-
-<pre>Beholder:observe("PAUSE", self, function(self) self['paused'](self) end)</pre>
-
-In addition to all of the above, note how it's possible to stop observing the trigger itself, instead of the "eye", as it happened before. This is due to the fact that instances can be used to uniquely identify triggers. The "middleclass-less" version of Beholder, nowever, needs to "create an unique identifier" in order to be able to identify each new observer.
-
+<pre>Beholder:trigger()</pre>
 
 h1. Installation
 
