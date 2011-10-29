@@ -15,8 +15,7 @@ local function copy(t)
   return c
 end
 
-local function extractEventAndActionFromParams(...)
-  local params = {...}
+local function extractEventAndActionFromParams(params)
   local action = table.remove(params, #params)
   return params, action
 end
@@ -75,7 +74,7 @@ function beholder:reset()
 end
 
 function beholder:observe(...)
-  local event, action = extractEventAndActionFromParams(...)
+  local event, action = extractEventAndActionFromParams({...})
   return addActionToNode(self, findOrCreateNode(self, event), action)
 end
 
@@ -84,8 +83,7 @@ function beholder:stopObserving(id)
 end
 
 function beholder:trigger(...)
-  local event = {...}
-  return executeNodeActions(self, event)
+  return executeNodeActions(self, {...})
 end
 
 beholder:reset()
