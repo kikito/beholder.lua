@@ -22,6 +22,13 @@ describe("Unit", function()
       assert_equal(counter1, 1)
       assert_equal(counter2, 1)
     end)
+
+    it("allows observing composed events", function()
+      local counter = 0
+      beholder:observe("KEYPRESS", "start", function() counter = counter + 1 end)
+      beholder:trigger("KEYPRESS", "start")
+      assert_equal(counter, 1)
+    end)
   end)
 
   describe(":stopObserving", function()
@@ -73,6 +80,28 @@ describe("Unit", function()
     it("returns true when an action was found and removed", function()
       local id = beholder:observe("X", function() end)
       assert_true(beholder:stopObserving(id))
+    end)
+
+  end)
+
+  describe(":trigger", function()
+    it("does not error on random stuff", function()
+      assert_not_error(function() beholder:trigger("FOO") end)
+    end)
+
+    it("returns false on events with no actions", function()
+      assert_equal(false, beholder:trigger("FOO"))
+    end)
+
+    it("returns false if there was a node with no actions", function()
+      beholder:observe("ONE","TWO", function() end)
+      assert_equal(false, beholder:trigger("ONE"))
+    end)
+
+    it("returns the number of actions executed", function()
+      beholder:observe("X", function() end)
+      beholder:observe("X", function() end)
+      assert_equal(2, beholder:trigger("X"))
     end)
 
   end)

@@ -9,22 +9,51 @@
 
 local beholder = {}
 
+local function copy(t)
+  local c={}
+  for i=1,#t do c[i]=t[i] end
+  return c
+end
 
-local function findNode(self, event)
-  return self._nodes[event]
+local function extractEventAndActionFromParams(...)
+  local params = {...}
+  local action = table.remove(params, #params)
+  return params, action
 end
 
 local function findNodeById(self, id)
   return self._nodesById[id]
 end
 
-local function createNode(self, event)
-  self._nodes[event] = {actions={}}
-  return self._nodes[event]
+local function findOrCreateNode(self, event)
+  local current = self._root
+  local key
+  for i=1, #event do
+    key = event[i]
+    current.children[key] = current.children[key] or {actions={},children={}}
+    current = current.children[key]
+  end
+  return current
 end
 
-local function findOrCreateNode(self, event)
-  return findNode(self,event) or createNode(self,event)
+local function executeNodeActions(self, event)
+  local current = self._root
+  local counter = 0
+  local params = copy(event)
+  local key
+
+  for i=1,#event do
+    key = event[i]
+    current = current.children[key]
+    if not current then break end
+    table.remove(params, 1)
+    for _,action in pairs(current.actions) do
+      action(unpack(params))
+      counter = counter + 1
+    end
+  end
+
+  return counter > 0 and counter
 end
 
 local function addActionToNode(self, node, action)
@@ -40,16 +69,13 @@ local function removeActionFromNode(node, id)
   return true
 end
 
-local function executeNodeActions(node, ...)
-  for _,action in pairs(node.actions) do action(...) end
-end
-
 function beholder:reset()
-  self._nodes = {}
+  self._root = { actions={}, children={} }
   self._nodesById = setmetatable({}, {__mode="k"})
 end
 
-function beholder:observe(event, action)
+function beholder:observe(...)
+  local event, action = extractEventAndActionFromParams(...)
   return addActionToNode(self, findOrCreateNode(self, event), action)
 end
 
@@ -57,9 +83,9 @@ function beholder:stopObserving(id)
   return removeActionFromNode(findNodeById(self, id), id)
 end
 
-function beholder:trigger(event, ...)
-  local node = findNode(self, event)
-  if node then executeNodeActions(node, ...) end
+function beholder:trigger(...)
+  local event = {...}
+  return executeNodeActions(self, event)
 end
 
 beholder:reset()
