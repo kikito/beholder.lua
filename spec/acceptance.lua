@@ -76,5 +76,24 @@ describe("Acceptance", function()
     assert_false(escapePressed)
   end)
 
+  test("nil events", function()
+    local counter = 0
+
+    local id = beholder:observe(function(_, x) counter = counter + x end)
+
+    beholder:trigger("FOO", 1)
+    beholder:trigger("BAR", 2)
+
+    assert_equal(3, counter)
+
+    beholder:stopObserving(id)
+
+    beholder:observe("BAZ", function() counter = counter + 1 end)
+    beholder:trigger()
+
+    assert_equal(4, counter)
+
+  end)
+
 
 end)

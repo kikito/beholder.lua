@@ -29,6 +29,14 @@ describe("Unit", function()
       beholder:trigger("KEYPRESS", "start")
       assert_equal(counter, 1)
     end)
+
+    it("observes all events with the nil event", function()
+      local counter = 0
+      beholder:observe(function(_,x) counter = counter + x end)
+      beholder:trigger("FOO", 1)
+      beholder:trigger("BAR", 2)
+      assert_equal(3, counter)
+    end)
   end)
 
   describe(":stopObserving", function()
@@ -102,6 +110,16 @@ describe("Unit", function()
       beholder:observe("X", function() end)
       beholder:observe("X", function() end)
       assert_equal(2, beholder:trigger("X"))
+    end)
+
+    it("triggers any observation with the nil event", function()
+      local counter = 0
+      beholder:observe("X", function() counter = counter + 1 end)
+      beholder:observe("Y", 1, function() counter = counter + 2 end)
+
+      beholder:trigger()
+
+      assert_equal(3, counter)
     end)
 
   end)

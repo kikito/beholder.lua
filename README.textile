@@ -1,6 +1,6 @@
 h1. beholder.lua
 
-A simple event observer for Lua. Can be used with "middleclass":https://github.com/kikito/middleclass
+A simple event observer for Lua.
 
 h1. Example
 
