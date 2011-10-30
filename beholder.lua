@@ -5,17 +5,6 @@
 -- The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 -- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN callback OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-local beholder = {}
-
-local function initialize(self)
-  self._root = { callbacks={}, children={} }
-  self._nodesById = setmetatable({}, {__mode="k"})
-end
-
-local function checkSelf(self, methodName)
-  assert(type(self)=="table" and self._root and self._nodesById, "Use beholder:" .. methodName .. " instead of beholder." .. methodName)
-end
-
 local function falseIfZero(n)
   return n > 0 and n
 end
@@ -26,16 +15,7 @@ local function copy(t)
   return c
 end
 
-local function extractEventAndCallbackFromParams(params)
-  assert(#params > 0, "beholder:observe requires at least one parameter - the callback. You usually want to use two, i.e.: beholder:observe('EVENT', callback)")
-  local callback = table.remove(params, #params)
-  return params, callback
-end
-
-local function findNodeById(self, id)
-  return self._nodesById[id]
-end
-
+-- private node-exclusive functions
 local function findOrCreateChildNode(node, key)
   node.children[key] = node.children[key] or { callbacks = {}, children = {} }
   return node.children[key]
@@ -79,6 +59,33 @@ local function executeEventCallbacks(node, event)
   return counter
 end
 
+local function removeCallbackFromNode(node, id)
+  if not node then return false end
+  node.callbacks[id] = nil
+  return true
+end
+
+-- beholder private functions
+
+local function checkSelf(self, methodName)
+  assert(type(self)=="table" and self._root and self._nodesById, "Use beholder:" .. methodName .. " instead of beholder." .. methodName)
+end
+
+local function extractEventAndCallbackFromParams(params)
+  assert(#params > 0, "beholder:observe requires at least one parameter - the callback. You usually want to use two, i.e.: beholder:observe('EVENT', callback)")
+  local callback = table.remove(params, #params)
+  return params, callback
+end
+
+local function initialize(self)
+  self._root = { callbacks={}, children={} }
+  self._nodesById = setmetatable({}, {__mode="k"})
+end
+
+local function findNodeById(self, id)
+  return self._nodesById[id]
+end
+
 local function addCallbackToNode(self, node, callback)
   local id = {}
   node.callbacks[id] = callback
@@ -86,13 +93,9 @@ local function addCallbackToNode(self, node, callback)
   return id
 end
 
-local function removeCallbackFromNode(node, id)
-  if not node then return false end
-  node.callbacks[id] = nil
-  return true
-end
+------ Public interface
 
--------
+local beholder = {}
 
 function beholder:observe(...)
   checkSelf(self, 'observe')
