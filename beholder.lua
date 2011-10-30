@@ -16,59 +16,80 @@ local function copy(t)
 end
 
 -- private node-exclusive functions
-local function findOrCreateChildNode(node, key)
-  node.children[key] = node.children[key] or { callbacks = {}, children = {} }
-  return node.children[key]
+
+local Node = {
+  _nodesById = setmetatable({}, {__mode="k"})
+}
+
+function Node:new()
+  return setmetatable( { callbacks = {}, children = {} }, { __index = Node } )
 end
 
-local function findOrCreateDescendantNode(node, keys)
+function Node:findById(id)
+  return self._nodesById[id]
+end
+
+function Node:findOrCreateChild(key)
+  self.children[key] = self.children[key] or Node:new()
+  return self.children[key]
+end
+
+function Node:findOrCreateDescendant(keys)
+  local node = self
   for i=1, #keys do
-    node = findOrCreateChildNode(node, keys[i])
+    node = node:findOrCreateChild(keys[i])
   end
   return node
 end
 
-local function executeNodeCallbacks(node, params)
+function Node:executeCallbacks(params)
   local counter = 0
-  for _,callback in pairs(node.callbacks) do
+  for _,callback in pairs(self.callbacks) do
     callback(unpack(params))
     counter = counter + 1
   end
   return counter
 end
 
-local function executeAllCallbacks(node, params)
-  local counter = executeNodeCallbacks(node, params)
-  for _,child in pairs(node.children) do
-    counter = counter + executeAllCallbacks(child, params)
+function Node:executeAllCallbacks(params)
+  local counter = self:executeCallbacks(params)
+  for _,child in pairs(self.children) do
+    counter = counter + child:executeAllCallbacks(params)
   end
   return counter
 end
 
-local function executeEventCallbacks(node, event)
+function Node:executeEventCallbacks(event)
   local params = copy(event)
-  local counter = executeNodeCallbacks(node, params)
+  local counter = self:executeCallbacks(params)
+  local node = self
 
   for i=1, #event do
     node = node.children[event[i]]
     if not node then break end
     table.remove(params, 1)
-    counter = counter + executeNodeCallbacks(node, params)
+    counter = counter + node:executeCallbacks(params)
   end
 
   return counter
 end
 
-local function removeCallbackFromNode(node, id)
-  if not node then return false end
-  node.callbacks[id] = nil
-  return true
+function Node:removeCallback(id)
+  self.callbacks[id] = nil
+  Node._nodesById[id] = nil
+end
+
+function Node:addCallback(callback)
+  local id = {}
+  self.callbacks[id] = callback
+  Node._nodesById[id] = self
+  return id
 end
 
 -- beholder private functions
 
 local function checkSelf(self, methodName)
-  assert(type(self)=="table" and self._root and self._nodesById, "Use beholder:" .. methodName .. " instead of beholder." .. methodName)
+  assert(type(self)=="table" and self._root, "Use beholder:" .. methodName .. " instead of beholder." .. methodName)
 end
 
 local function extractEventAndCallbackFromParams(params)
@@ -78,19 +99,7 @@ local function extractEventAndCallbackFromParams(params)
 end
 
 local function initialize(self)
-  self._root = { callbacks={}, children={} }
-  self._nodesById = setmetatable({}, {__mode="k"})
-end
-
-local function findNodeById(self, id)
-  return self._nodesById[id]
-end
-
-local function addCallbackToNode(self, node, callback)
-  local id = {}
-  node.callbacks[id] = callback
-  self._nodesById[id] = node
-  return id
+  self._root = Node:new()
 end
 
 ------ Public interface
@@ -100,22 +109,25 @@ local beholder = {}
 function beholder:observe(...)
   checkSelf(self, 'observe')
   local event, callback = extractEventAndCallbackFromParams({...})
-  return addCallbackToNode(self, findOrCreateDescendantNode(self._root, event), callback)
+  return self._root:findOrCreateDescendant(event):addCallback(callback)
 end
 
 function beholder:stopObserving(id)
   checkSelf(self, 'stopObserving')
-  return removeCallbackFromNode(findNodeById(self, id), id)
+  local node = Node:findById(id)
+  if not node then return false end
+  node:removeCallback(id)
+  return true
 end
 
 function beholder:trigger(...)
   checkSelf(self, 'trigger')
-  return falseIfZero( executeEventCallbacks(self._root, {...}) )
+  return falseIfZero( self._root:executeEventCallbacks({...}) )
 end
 
 function beholder:triggerAll(...)
   checkSelf(self, 'triggerAll')
-  return falseIfZero( executeAllCallbacks(self._root, {...}) )
+  return falseIfZero( self._root:executeAllCallbacks({...}) )
 end
 
 function beholder:reset()
