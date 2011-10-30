@@ -88,10 +88,29 @@ describe("Acceptance", function()
 
     beholder:stopObserving(id)
 
-    beholder:observe("BAZ", function() counter = counter + 1 end)
+    beholder:observe(function() counter = 10 end)
+
     beholder:trigger()
 
-    assert_equal(4, counter)
+    assert_equal(10, counter)
+  end)
+
+  test("triggering all events", function()
+    local even = 0
+    local uneven = 1
+
+    beholder:observe("EVEN", function(x) even = even + 2*x end)
+    beholder:observe("UNEVEN", function(x) uneven = uneven + 2*x end)
+
+    beholder:triggerAll(1)
+
+    assert_equal(even, 2)
+    assert_equal(uneven, 3)
+
+    beholder:triggerAll(2)
+
+    assert_equal(even, 6)
+    assert_equal(uneven, 7)
 
   end)
 

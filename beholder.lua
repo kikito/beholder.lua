@@ -7,6 +7,10 @@
 
 local beholder = {}
 
+local function falseIfZero(n)
+  return n > 0 and n
+end
+
 local function copy(t)
   local c={}
   for i=1,#t do c[i]=t[i] end
@@ -37,7 +41,6 @@ end
 
 local function executeNodeCallbacks(node, params)
   local counter = 0
-  params = params or {}
   for _,callback in pairs(node.callbacks) do
     callback(unpack(params))
     counter = counter + 1
@@ -45,10 +48,10 @@ local function executeNodeCallbacks(node, params)
   return counter
 end
 
-local function executeAllCallbacks(node)
-  local counter = executeNodeCallbacks(node)
+local function executeAllCallbacks(node, params)
+  local counter = executeNodeCallbacks(node, params)
   for _,child in pairs(node.children) do
-    counter = counter + executeAllCallbacks(child)
+    counter = counter + executeAllCallbacks(child, params)
   end
   return counter
 end
@@ -95,9 +98,11 @@ function beholder:stopObserving(id)
 end
 
 function beholder:trigger(...)
-  local event = {...}
-  local counter = (#event == 0) and executeAllCallbacks(self._root) or executeEventCallbacks(self._root, event)
-  return counter > 0 and counter
+  return falseIfZero( executeEventCallbacks(self._root, {...}) )
+end
+
+function beholder:triggerAll(...)
+  return falseIfZero( executeAllCallbacks(self._root, {...}) )
 end
 
 beholder:reset()

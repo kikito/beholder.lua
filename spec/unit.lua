@@ -116,20 +116,38 @@ describe("Unit", function()
       assert_equal(2, beholder:trigger("X"))
     end)
 
-    it("triggers any observation with the nil event", function()
+    it("triggers callbacks within the nil event only", function()
       local counter = 0
-      beholder:observe("X", function() counter = counter + 1 end)
-      beholder:observe("Y", 1, function() counter = counter + 2 end)
+      beholder:observe("X", function() counter = counter + 10 end)
+      beholder:observe(function() counter = counter + 5 end)
 
       beholder:trigger()
 
-      assert_equal(3, counter)
+      assert_equal(5, counter)
     end)
-
   end)
 
-
-  describe(":reset", function()
+  describe(":triggerAll", function()
+    it("calls all registered callbacks", function()
+      local counter = 0
+      beholder:observe("X", function() counter = counter + 1 end)
+      beholder:triggerAll()
+      assert_equal(1, counter)
+    end)
+    it("passes parameters to callbacks", function()
+      local counter = 0
+      beholder:observe(function(x) counter = counter + x end)
+      beholder:triggerAll(2)
+      assert_equal(2, counter)
+    end)
+    it("returns false if no actions where found", function()
+      assert_false(beholder:triggerAll())
+    end)
+    it("returns the number of actions executed", function()
+      beholder:observe("X", function() end)
+      beholder:observe("Y", function() end)
+      assert_equal(2, beholder:triggerAll())
+    end)
 
   end)
 

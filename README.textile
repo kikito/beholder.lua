@@ -94,13 +94,24 @@ Similarly, you can add an action that will be triggered for any player detection
 
 <pre>Beholder:observe('PLAYERDETECTION', function(player,x,y) print(player.no," detected at ",x,y)</pre>
 
+h1. The nil event
+
 If you want to detect all signals raised (i.e. for logging and debugging) you can do so by observing the "empty" event - simply pass a function to observe, without adding any more params:
 
 <pre>Beholder:observe(function(...) log("Event triggered", ...) end)</pre>
 
-Similarly, you could use this to trigger all observed events (again, this will be useful mostly for debugging):
+If you want to trigger the events attached only to the nil event, you can do so by calling trigger without params:
 
 <pre>Beholder:trigger()</pre>
+
+h1. Triggering all callbacks
+
+You can use the @triggerAll@ method to trigger all observed events (this will be useful mostly for debugging):
+
+<pre>Beholder:triggerAll(...)</pre>
+
+Note that you can pass parameters to @triggerAll@. These will be passed to all callbacks (make sure that they are prepared for this, or you will get errors).
+
 
 h1. Installation
 
