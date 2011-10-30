@@ -5,17 +5,13 @@
 -- The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 -- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN callback OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-local function falseIfZero(n)
-  return n > 0 and n
-end
-
 local function copy(t)
   local c={}
   for i=1,#t do c[i]=t[i] end
   return c
 end
 
--- private node-exclusive functions
+-- private Node class
 
 local Node = {
   _nodesById = setmetatable({}, {__mode="k"})
@@ -42,7 +38,7 @@ function Node:findOrCreateDescendant(keys)
   return node
 end
 
-function Node:executeCallbacks(params)
+function Node:invokeCallbacks(params)
   local counter = 0
   for _,callback in pairs(self.callbacks) do
     callback(unpack(params))
@@ -51,32 +47,27 @@ function Node:executeCallbacks(params)
   return counter
 end
 
-function Node:executeAllCallbacks(params)
-  local counter = self:executeCallbacks(params)
+function Node:invokeAllCallbacksInSubTree(params)
+  local counter = self:invokeCallbacks(params)
   for _,child in pairs(self.children) do
-    counter = counter + child:executeAllCallbacks(params)
+    counter = counter + child:invokeAllCallbacksInSubTree(params)
   end
   return counter
 end
 
-function Node:executeEventCallbacks(event)
-  local params = copy(event)
-  local counter = self:executeCallbacks(params)
+function Node:invokeCallbacksFromPath(path)
   local node = self
+  local params = copy(path)
+  local counter = node:invokeCallbacks(params)
 
-  for i=1, #event do
-    node = node.children[event[i]]
+  for i=1, #path do
+    node = node.children[path[i]]
     if not node then break end
     table.remove(params, 1)
-    counter = counter + node:executeCallbacks(params)
+    counter = counter + node:invokeCallbacks(params)
   end
 
   return counter
-end
-
-function Node:removeCallback(id)
-  self.callbacks[id] = nil
-  Node._nodesById[id] = nil
 end
 
 function Node:addCallback(callback)
@@ -86,7 +77,16 @@ function Node:addCallback(callback)
   return id
 end
 
+function Node:removeCallback(id)
+  self.callbacks[id] = nil
+  Node._nodesById[id] = nil
+end
+
 -- beholder private functions
+
+local function falseIfZero(n)
+  return n > 0 and n
+end
 
 local function checkSelf(self, methodName)
   assert(type(self)=="table" and self._root, "Use beholder:" .. methodName .. " instead of beholder." .. methodName)
@@ -122,12 +122,12 @@ end
 
 function beholder:trigger(...)
   checkSelf(self, 'trigger')
-  return falseIfZero( self._root:executeEventCallbacks({...}) )
+  return falseIfZero( self._root:invokeCallbacksFromPath({...}) )
 end
 
 function beholder:triggerAll(...)
   checkSelf(self, 'triggerAll')
-  return falseIfZero( self._root:executeAllCallbacks({...}) )
+  return falseIfZero( self._root:invokeAllCallbacksInSubTree({...}) )
 end
 
 function beholder:reset()
