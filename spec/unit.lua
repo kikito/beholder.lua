@@ -7,6 +7,10 @@ describe("Unit", function()
   end)
 
   describe(":observe", function()
+    it("checks self", function()
+      assert_error(function() beholder.observe("X", function() end) end)
+    end)
+
     it("notices simple events so that trigger works", function()
       local counter = 0
       beholder:observe("EVENT", function() counter = counter + 1 end)
@@ -44,6 +48,9 @@ describe("Unit", function()
   end)
 
   describe(":stopObserving", function()
+    it("checks self", function()
+      assert_error(function() beholder.stopObserving() end)
+    end)
     it("stops noticing events so trigger doesn't work any more", function()
       local counter = 0
       local id = beholder:observe("EVENT", function() counter = counter + 1 end)
@@ -97,6 +104,9 @@ describe("Unit", function()
   end)
 
   describe(":trigger", function()
+    it("checks self", function()
+      assert_error(function() beholder.trigger() end)
+    end)
     it("does not error on random stuff", function()
       assert_not_error(function() beholder:trigger("FOO") end)
     end)
@@ -128,6 +138,9 @@ describe("Unit", function()
   end)
 
   describe(":triggerAll", function()
+    it("checks self", function()
+      assert_error(function() beholder.triggerAll() end)
+    end)
     it("calls all registered callbacks", function()
       local counter = 0
       beholder:observe("X", function() counter = counter + 1 end)
@@ -148,7 +161,12 @@ describe("Unit", function()
       beholder:observe("Y", function() end)
       assert_equal(2, beholder:triggerAll())
     end)
+  end)
 
+  describe(":reset", function()
+    it("checks self", function()
+      assert_error(function() beholder.reset() end)
+    end)
   end)
 
 

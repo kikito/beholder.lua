@@ -7,6 +7,15 @@
 
 local beholder = {}
 
+local function initialize(self)
+  self._root = { callbacks={}, children={} }
+  self._nodesById = setmetatable({}, {__mode="k"})
+end
+
+local function checkSelf(self, methodName)
+  assert(type(self)=="table" and self._root and self._nodesById, "Use beholder:" .. methodName .. " instead of beholder." .. methodName)
+end
+
 local function falseIfZero(n)
   return n > 0 and n
 end
@@ -83,28 +92,34 @@ local function removeCallbackFromNode(node, id)
   return true
 end
 
-function beholder:reset()
-  self._root = { callbacks={}, children={} }
-  self._nodesById = setmetatable({}, {__mode="k"})
-end
+-------
 
 function beholder:observe(...)
+  checkSelf(self, 'observe')
   local event, callback = extractEventAndCallbackFromParams({...})
   return addCallbackToNode(self, findOrCreateDescendantNode(self._root, event), callback)
 end
 
 function beholder:stopObserving(id)
+  checkSelf(self, 'stopObserving')
   return removeCallbackFromNode(findNodeById(self, id), id)
 end
 
 function beholder:trigger(...)
+  checkSelf(self, 'trigger')
   return falseIfZero( executeEventCallbacks(self._root, {...}) )
 end
 
 function beholder:triggerAll(...)
+  checkSelf(self, 'triggerAll')
   return falseIfZero( executeAllCallbacks(self._root, {...}) )
 end
 
-beholder:reset()
+function beholder:reset()
+  checkSelf(self, 'reset')
+  initialize(self)
+end
+
+initialize(beholder)
 
 return beholder
