@@ -37,6 +37,10 @@ describe("Unit", function()
       beholder:trigger("BAR", 2)
       assert_equal(3, counter)
     end)
+
+    it("throws an error if called without at least one parameter", function()
+      assert_error(function() beholder:observe() end)
+    end)
   end)
 
   describe(":stopObserving", function()
