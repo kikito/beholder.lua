@@ -119,8 +119,6 @@ Note that you can pass parameters to @triggerAll@. These will be passed to all c
 
 h1. Installation
 
-If you are going to use it, make sure that you have downloaded and installed "middleclass":https://github.com/kikito/middleclass
-
 Just copy the beholder.lua file wherever you want it (for example on a lib/ folder). Then write this in any Lua file where you want to use it:
 
 <pre>local Beholder = require 'beholder'</pre>
@@ -129,7 +127,7 @@ On this example I've assigned it to a local variable. If you are going to use Be
 
 The @package.path@ variable must be configured so that the folder in which beholder.lua is copied is available, of course.
 
-Please make sure that you read the license, too (for your convenience it's now included at the beginning of the middleclass.lua file).
+Please make sure that you read the license, too (for your convenience it's now included at the beginning of the beholder.lua file).
 
 h1. Specs
 
