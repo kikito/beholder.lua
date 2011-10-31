@@ -100,6 +100,10 @@ If you want to detect all signals raised (i.e. for logging and debugging) you ca
 
 <pre>Beholder:observe(function(...) log("Event triggered", ...) end)</pre>
 
+A quick and dirty way of dumping all events in the standard output is just observing the nil event with @print@:
+
+<pre>Beholder:observe(print)</pre>
+
 If you want to trigger the events attached only to the nil event, you can do so by calling trigger without params:
 
 <pre>Beholder:trigger()</pre>
