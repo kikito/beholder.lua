@@ -72,6 +72,16 @@ This library allows you to build "walls" between them: your keyboard code will j
 
 You can obviously attach any number of observers to any given event. Similarly, you are
 
+h1. Halting event observation
+
+Every call to @beholder:observe@ returns an identifier which can be stored:
+
+<pre>local id = beholder:observe("FOO", bar, baz)</pre>
+
+That identifier can be used to cancel the observation at any moment. You can do so by using the @beholder:stopObserving@ method:
+
+<pre>beholder:stopObserving(id)</pre>
+
 h1. Composed events
 
 Events can be any type of Lua object. On the example, we used the "PAUSE" string. It could also be a number, a function or a table. The == operator is used in all cases.
