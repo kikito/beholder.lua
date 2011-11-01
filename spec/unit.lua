@@ -45,6 +45,17 @@ describe("Unit", function()
     it("throws an error if called without at least one parameter", function()
       assert_error(function() beholder:observe() end)
     end)
+
+    it("does not store hard references to variables", function()
+      local counter = 0
+      local x = {}
+      beholder:observe(x, function() counter = counter + 1 end)
+      beholder:triggerAll()
+      x = nil
+      collectgarbage("collect")
+      beholder:triggerAll()
+      assert_equal(1, counter)
+    end)
   end)
 
   describe(":stopObserving", function()

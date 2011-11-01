@@ -18,7 +18,8 @@ local Node = {
 }
 
 function Node:new()
-  return setmetatable( { callbacks = {}, children = {} }, { __index = Node } )
+  local node = { callbacks = {}, children = setmetatable({}, {__mode="k"}) }
+  return setmetatable( node, { __index = Node } )
 end
 
 function Node:findById(id)
