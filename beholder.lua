@@ -1,4 +1,4 @@
--- beholder.lua - v1.0.1 (2011-11)
+-- beholder.lua - v2.0.0 (2011-11)
 
 -- Copyright (c) 2011 Enrique García Cota
 -- Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -13,33 +13,36 @@ end
 
 -- private Node class
 
-local Node = {
-  _nodesById = setmetatable({}, {__mode="k"})
-}
+local nodesById = nil
+local root = nil
 
-function Node:new()
-  local node = { callbacks = {}, children = setmetatable({}, {__mode="k"}) }
-  return setmetatable( node, { __index = Node } )
+local function newNode()
+  return { callbacks = {}, children = setmetatable({}, {__mode="k"}) }
 end
 
-function Node:findById(id)
-  return self._nodesById[id]
+local function initialize()
+  root = newNode()
+  nodesById = setmetatable({}, {__mode="k"})
 end
 
-function Node:findOrCreateChild(key)
-  self.children[key] = self.children[key] or Node:new()
+local function findNodeById(id)
+  return nodesById[id]
+end
+
+local function findOrCreateChildNode(self, key)
+  self.children[key] = self.children[key] or newNode()
   return self.children[key]
 end
 
-function Node:findOrCreateDescendant(keys)
+local function findOrCreateDescendantNode(self, keys)
   local node = self
   for i=1, #keys do
-    node = node:findOrCreateChild(keys[i])
+    node = findOrCreateChildNode(node, keys[i])
   end
   return node
 end
 
-function Node:invokeCallbacks(params)
+local function invokeNodeCallbacks(self, params)
   local counter = 0
   for _,callback in pairs(self.callbacks) do
     callback(unpack(params))
@@ -48,40 +51,46 @@ function Node:invokeCallbacks(params)
   return counter
 end
 
-function Node:invokeAllCallbacksInSubTree(params)
-  local counter = self:invokeCallbacks(params)
+local function invokeAllNodeCallbacksInSubTree(self, params)
+  local counter = invokeNodeCallbacks(self, params)
   for _,child in pairs(self.children) do
-    counter = counter + child:invokeAllCallbacksInSubTree(params)
+    counter = counter + invokeAllNodeCallbacksInSubTree(child, params)
   end
   return counter
 end
 
-function Node:invokeCallbacksFromPath(path)
+local function invokeNodeCallbacksFromPath(self, path)
   local node = self
   local params = copy(path)
-  local counter = node:invokeCallbacks(params)
+  local counter = invokeNodeCallbacks(node, params)
 
   for i=1, #path do
     node = node.children[path[i]]
     if not node then break end
     table.remove(params, 1)
-    counter = counter + node:invokeCallbacks(params)
+    counter = counter + invokeNodeCallbacks(node, params)
   end
 
   return counter
 end
 
-function Node:addCallback(callback)
+local function addCallbackToNode(self, callback)
   local id = {}
   self.callbacks[id] = callback
-  Node._nodesById[id] = self
+  nodesById[id] = self
   return id
 end
 
-function Node:removeCallback(id)
+local function removeCallbackFromNode(self, id)
   self.callbacks[id] = nil
-  Node._nodesById[id] = nil
+  nodesById[id] = nil
 end
+
+
+------ beholder table
+
+local beholder = {}
+
 
 -- beholder private functions
 
@@ -89,53 +98,40 @@ local function falseIfZero(n)
   return n > 0 and n
 end
 
-local function checkSelf(self, methodName)
-  assert(type(self)=="table" and self._root, "Use beholder:" .. methodName .. " instead of beholder." .. methodName)
-end
-
 local function extractEventAndCallbackFromParams(params)
-  assert(#params > 0, "beholder:observe requires at least one parameter - the callback. You usually want to use two, i.e.: beholder:observe('EVENT', callback)")
+  assert(#params > 0, "beholder.observe requires at least one parameter - the callback. You usually want to use two, i.e.: beholder.observe('EVENT', callback)")
   local callback = table.remove(params, #params)
   return params, callback
 end
 
-local function initialize(self)
-  self._root = Node:new()
-end
 
 ------ Public interface
 
-local beholder = {}
-
-function beholder:observe(...)
-  checkSelf(self, 'observe')
+function beholder.observe(...)
   local event, callback = extractEventAndCallbackFromParams({...})
-  return self._root:findOrCreateDescendant(event):addCallback(callback)
+  local node = findOrCreateDescendantNode(root, event)
+  return addCallbackToNode(node, callback)
 end
 
-function beholder:stopObserving(id)
-  checkSelf(self, 'stopObserving')
-  local node = Node:findById(id)
+function beholder.stopObserving(id)
+  local node = findNodeById(id)
   if not node then return false end
-  node:removeCallback(id)
+  removeCallbackFromNode(node, id)
   return true
 end
 
-function beholder:trigger(...)
-  checkSelf(self, 'trigger')
-  return falseIfZero( self._root:invokeCallbacksFromPath({...}) )
+function beholder.trigger(...)
+  return falseIfZero( invokeNodeCallbacksFromPath(root, {...}) )
 end
 
-function beholder:triggerAll(...)
-  checkSelf(self, 'triggerAll')
-  return falseIfZero( self._root:invokeAllCallbacksInSubTree({...}) )
+function beholder.triggerAll(...)
+  return falseIfZero( invokeAllNodeCallbacksInSubTree(root, {...}) )
 end
 
-function beholder:reset()
-  checkSelf(self, 'reset')
-  initialize(self)
+function beholder.reset()
+  initialize()
 end
 
-initialize(beholder)
+initialize()
 
 return beholder

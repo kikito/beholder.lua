@@ -44,8 +44,8 @@ function checkCollision(a,b)
   local ax1, ay1, ax2, ay2 = a.x, a.y, a.x+16, a.y+16
   local bx1, by1, bx2, by2 = b.x, b.y, b.x+16, b.y+16
   if ax1 < bx2 and ax2 > bx1 and ay1 < by2 and ay2 > by1 then
-    beholder:trigger("COLLISION", a, b)
-    beholder:trigger("COLLISION", b, a)
+    beholder.trigger("COLLISION", a, b)
+    beholder.trigger("COLLISION", b, a)
   end
 end
 
@@ -91,7 +91,7 @@ end
 
 function gameOver()
   print("braains")
-  beholder:reset()
+  beholder.reset()
   love.event.push('q')
 end
 
@@ -107,12 +107,12 @@ function createPlayer()
   }
   setmetatable(player, {__tostring = function(t) return 'player' end})
   for dir,_ in pairs(directions) do
-    beholder:observe("KEYPRESSED", dir, function() startMoving(player, dir) end)
-    beholder:observe("KEYRELEASED", dir, function() stopMoving(player, dir) end)
+    beholder.observe("KEYPRESSED", dir, function() startMoving(player, dir) end)
+    beholder.observe("KEYRELEASED", dir, function() stopMoving(player, dir) end)
   end
-  beholder:observe("KEYPRESSED", " ", activateMine)
+  beholder.observe("KEYPRESSED", " ", activateMine)
 
-  beholder:observe("COLLISION", player, gameOver)
+  beholder.observe("COLLISION", player, gameOver)
 
   table.insert(entities, player)
 end
@@ -141,12 +141,12 @@ function createMine()
   }
   setmetatable(mine, {__tostring = function(t) return 'mine' end})
 
-  beholder:observe("COLLISION", mine, function(zombie)
+  beholder.observe("COLLISION", mine, function(zombie)
     if not mine.exploded then
       mine.exploded = true
       mine.color = {50,50,50}
       zombie.dead = true
-      beholder:trigger("KILLED", zombie)
+      beholder.trigger("KILLED", zombie)
     end
   end)
 
@@ -177,11 +177,11 @@ function love.draw()
 end
 
 function love.keypressed(key)
-  beholder:trigger("KEYPRESSED", key)
+  beholder.trigger("KEYPRESSED", key)
 end
 
 function love.keyreleased(key)
-  beholder:trigger("KEYRELEASED", key)
+  beholder.trigger("KEYRELEASED", key)
 end
 
 function love.load()
@@ -196,34 +196,34 @@ function love.load()
     createZombie()
   end
 
-  beholder:observe(print) -- print every event on the terminal
+  beholder.observe(print) -- print every event on the terminal
 
   -- prints the last pressed key on the screen
   lastPressedKey = "<none yet>"
-  beholder:observe("KEYPRESSED", function(key)
+  beholder.observe("KEYPRESSED", function(key)
     lastPressedKey = key
   end)
 
   -- binds escape to the gameOver function (quit game)
-  beholder:observe("KEYPRESSED", "escape", gameOver)
+  beholder.observe("KEYPRESSED", "escape", gameOver)
 
   -- handle pause
-  beholder:observe("KEYPRESSED", "pause", function()
+  beholder.observe("KEYPRESSED", "pause", function()
     all(entities, pause)
     local id
-    id = beholder:observe("KEYPRESSED", function()
+    id = beholder.observe("KEYPRESSED", function()
       all(entities, unpause)
-      beholder:stopObserving(id)
+      beholder.stopObserving(id)
     end)
   end)
 
 
   -- victor is triggered if enough kills are done
-  beholder:observe("KILLED", function()
+  beholder.observe("KILLED", function()
     killCount = killCount + 1
     if killCount == zombieCount then
       print("You win!")
-      beholder:reset()
+      beholder.reset()
       love.event.push('q')
     end
   end)
