@@ -1,0 +1,17 @@
+h1. beholder.lua demo
+
+This is a demo of the beholder.lua library. It shows how the library can be used to capture and manage different kinds of events.
+
+The demo requires "LÖVE":http://love2d.org
+
+h2. Instructions
+
+* Download and install LÖVE
+* Download/uncompress this repo to a folder
+* Execute with LÖVE
+<pre>
+cd folder/where/this/repo/is
+love .
+</pre>
+
+
