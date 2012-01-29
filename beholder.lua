@@ -1,4 +1,4 @@
--- beholder.lua - v2.0.0 (2011-11)
+-- beholder.lua - v2.0.1 (2011-11)
 
 -- Copyright (c) 2011 Enrique García Cota
 -- Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -11,6 +11,14 @@ local function copy(t)
   return c
 end
 
+local function hash2array(t)
+  local arr, i = {}, 0
+  for _,v in pairs(t) do
+    i = i+1
+    arr[i] = v
+  end
+  return arr, i
+end
 -- private Node class
 
 local nodesById = nil
@@ -43,12 +51,12 @@ local function findOrCreateDescendantNode(self, keys)
 end
 
 local function invokeNodeCallbacks(self, params)
-  local counter = 0
-  for _,callback in pairs(self.callbacks) do
-    callback(unpack(params))
-    counter = counter + 1
+  -- copy the hash into an array, for safety (self-erasures)
+  local callbacks, count = hash2array(self.callbacks)
+  for i=1,#callbacks do
+    callbacks[i](unpack(params))
   end
-  return counter
+  return count
 end
 
 local function invokeAllNodeCallbacksInSubTree(self, params)
