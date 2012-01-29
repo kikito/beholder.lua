@@ -83,14 +83,17 @@ function Node:removeCallback(id)
   Node._nodesById[id] = nil
 end
 
+
+------ beholder table
+
+local beholder = {}
+
+
 -- beholder private functions
+local root = nil
 
 local function falseIfZero(n)
   return n > 0 and n
-end
-
-local function checkSelf(self, methodName)
-  assert(type(self)=="table" and self._root, "Use beholder:" .. methodName .. " instead of beholder." .. methodName)
 end
 
 local function extractEventAndCallbackFromParams(params)
@@ -99,43 +102,37 @@ local function extractEventAndCallbackFromParams(params)
   return params, callback
 end
 
-local function initialize(self)
-  self._root = Node:new()
+local function initialize()
+  root = Node:new()
 end
+
 
 ------ Public interface
 
-local beholder = {}
-
-function beholder:observe(...)
-  checkSelf(self, 'observe')
+function beholder.observe(...)
   local event, callback = extractEventAndCallbackFromParams({...})
-  return self._root:findOrCreateDescendant(event):addCallback(callback)
+  return root:findOrCreateDescendant(event):addCallback(callback)
 end
 
-function beholder:stopObserving(id)
-  checkSelf(self, 'stopObserving')
+function beholder.stopObserving(id)
   local node = Node:findById(id)
   if not node then return false end
   node:removeCallback(id)
   return true
 end
 
-function beholder:trigger(...)
-  checkSelf(self, 'trigger')
-  return falseIfZero( self._root:invokeCallbacksFromPath({...}) )
+function beholder.trigger(...)
+  return falseIfZero( root:invokeCallbacksFromPath({...}) )
 end
 
-function beholder:triggerAll(...)
-  checkSelf(self, 'triggerAll')
-  return falseIfZero( self._root:invokeAllCallbacksInSubTree({...}) )
+function beholder.triggerAll(...)
+  return falseIfZero( root:invokeAllCallbacksInSubTree({...}) )
 end
 
-function beholder:reset()
-  checkSelf(self, 'reset')
-  initialize(self)
+function beholder.reset()
+  initialize()
 end
 
-initialize(beholder)
+initialize()
 
 return beholder

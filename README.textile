@@ -10,18 +10,18 @@ beholder = require 'beholder'
 ...
 
 local goblin1 = {x=100, y=100}
-goblin1.pauseId = beholder:observe("PAUSE", function() goblin1.paused = true end)
+goblin1.pauseId = beholder.observe("PAUSE", function() goblin1.paused = true end)
 
 ...
 
 local goblin2 = {x=200, y=100}
-goblin2.pauseId = beholder:observe("PAUSE", function() goblin2.paused = true end)
+goblin2.pauseId = beholder.observe("PAUSE", function() goblin2.paused = true end)
 
 ...
 
 
 function pauseButtonPressed()
-  beholder:trigger("PAUSE")
+  beholder.trigger("PAUSE")
 end
 
 
@@ -38,23 +38,23 @@ end
 ...
 
 function destroyGoblin(goblin)
-  beholder:stopObserving(goblin.pauseId)
+  beholder.stopObserving(goblin.pauseId)
 end
 </pre>
 
-(Note: if you are doing lots of that "if whatever.state then ..." you might want to give a look to "stateful.lua":http://github.com/kikito/stateful.lua )
+(Note. if you are doing lots of that "if whatever.state then ..." you might want to give a look to "stateful.lua".http.//github.com/kikito/stateful.lua )
 
 h1. Why?
 
-This library tries to solve the following problem: some actions need to be executed when some asynchronous condition is fulfilled. By "asyncronous" we mean that it something that typically doesn't depend on the code. Hence precalculating it beforehand is impractical.
+This library tries to solve the following problem. some actions need to be executed when some asynchronous condition is fulfilled. By "asyncronous" we mean that it something that typically doesn't depend on the code. Hence precalculating it beforehand is impractical.
 
-Some examples:
+Some examples.
 
 * The pause menu is brought up, and all the actors in your videogame need to be frozen.
 * An image has item has been loaded from disk, and a progress bar needs to be updated.
 * The user presses certain combination of keys.
 
-The way these problems are typically handed is by continuously polling for the trigger condition. For example, on the pause menu, one would find this code on the enemy movement routines:
+The way these problems are typically handed is by continuously polling for the trigger condition. For example, on the pause menu, one would find this code on the enemy movement routines.
 
 <pre>
 if pause_menu_is_up then
@@ -64,72 +64,72 @@ else
 end
 </pre>
 
-You will have a code similar to that on each part that needs to be stopped: on your enemy code, the bullet code, the player code, etc.
+You will have a code similar to that on each part that needs to be stopped. on your enemy code, the bullet code, the player code, etc.
 
 But the biggest problem with that code is lack of separation. The code dealign with your goblins should only deal with goblin stuff. It should not "know" about the menu system, or the keyboard actions, or the file loader. And the same goes with your bullet code, player code, etc. They don't need to know about exernal systems, such as the keyboard.
 
-This library allows you to build "walls" between them: your keyboard code will just raise events, and your player code will observe those events. This allows for better encapsulation; if you later add multiplayer functionality, for example, the network module will just have to raise the same events just like the keyboard module did; your player logic will be unaffected.
+This library allows you to build "walls" between them. your keyboard code will just raise events, and your player code will observe those events. This allows for better encapsulation; if you later add multiplayer functionality, for example, the network module will just have to raise the same events just like the keyboard module did; your player logic will be unaffected.
 
 You can obviously attach any number of observers to any given event. Similarly, you are
 
 h1. Halting event observation
 
-Every call to @beholder:observe@ returns an identifier which can be stored:
+Every call to @beholder.observe@ returns an identifier which can be stored.
 
-<pre>local id = beholder:observe("FOO", bar, baz)</pre>
+<pre>local id = beholder.observe("FOO", bar, baz)</pre>
 
-That identifier can be used to cancel the observation at any moment. You can do so by using the @beholder:stopObserving@ method:
+That identifier can be used to cancel the observation at any moment. You can do so by using the @beholder.stopObserving@ method.
 
-<pre>beholder:stopObserving(id)</pre>
+<pre>beholder.stopObserving(id)</pre>
 
 h1. Composed events
 
 Events can be any type of Lua object. On the example, we used the "PAUSE" string. It could also be a number, a function or a table. The == operator is used in all cases.
 
-Composed events are built from more than one lua object. You can do them by simply adding more parameters to the observe/trigger functions. For example, this trigger:
+Composed events are built from more than one lua object. You can do them by simply adding more parameters to the observe/trigger functions. For example, this trigger.
 
-<pre>Beholder:trigger('PLAYERDETECTION', player1, 100, 200)</pre>
+<pre>Beholder.trigger('PLAYERDETECTION', player1, 100, 200)</pre>
 
-Will trigger this action:
+Will trigger this action.
 
-<pre>Beholder:observe('PLAYERDETECTION', player1, 100, 200, function() print("player1 detected at 100, 200") end)</pre>
+<pre>Beholder.observe('PLAYERDETECTION', player1, 100, 200, function() print("player1 detected at 100, 200") end)</pre>
 
 Composed events are inclusive. This means that this other observer will also get activated by the aforementioned trigger.
 
-<pre>Beholder:observe('PLAYERDETECTION', player1, function(x,y) print("player1 detected at ",x,y)</pre>
+<pre>Beholder.observe('PLAYERDETECTION', player1, function(x,y) print("player1 detected at ",x,y)</pre>
 
 Notice that the two "non-observed integers" will be passed to the callback as additional parameters. That second action will be executed any time player1 is detected, no matter what coordinates.
 
-Similarly, you can add an action that will be triggered for any player detection:
+Similarly, you can add an action that will be triggered for any player detection.
 
-<pre>Beholder:observe('PLAYERDETECTION', function(player,x,y) print(player.no," detected at ",x,y)</pre>
+<pre>Beholder.observe('PLAYERDETECTION', function(player,x,y) print(player.no," detected at ",x,y)</pre>
 
 h1. The nil event
 
-If you want to detect all signals raised (i.e. for logging and debugging) you can do so by observing the "empty" event - simply pass a function to observe, without adding any more params:
+If you want to detect all signals raised (i.e. for logging and debugging) you can do so by observing the "empty" event - simply pass a function to observe, without adding any more params.
 
-<pre>Beholder:observe(function(...) log("Event triggered", ...) end)</pre>
+<pre>Beholder.observe(function(...) log("Event triggered", ...) end)</pre>
 
-A quick and dirty way of dumping all events in the standard output is just observing the nil event with @print@:
+A quick and dirty way of dumping all events in the standard output is just observing the nil event with @print@.
 
-<pre>Beholder:observe(print)</pre>
+<pre>Beholder.observe(print)</pre>
 
-If you want to trigger the events attached only to the nil event, you can do so by calling trigger without params:
+If you want to trigger the events attached only to the nil event, you can do so by calling trigger without params.
 
-<pre>Beholder:trigger()</pre>
+<pre>Beholder.trigger()</pre>
 
 h1. Triggering all callbacks
 
-You can use the @triggerAll@ method to trigger all observed events (this will be useful mostly for debugging):
+You can use the @triggerAll@ method to trigger all observed events (this will be useful mostly for debugging).
 
-<pre>Beholder:triggerAll(...)</pre>
+<pre>Beholder.triggerAll(...)</pre>
 
 Note that you can pass parameters to @triggerAll@. These will be passed to all callbacks (make sure that they are prepared for this, or you will get errors).
 
 
 h1. Installation
 
-Just copy the beholder.lua file wherever you want it (for example on a lib/ folder). Then write this in any Lua file where you want to use it:
+Just copy the beholder.lua file wherever you want it (for example on a lib/ folder). Then write this in any Lua file where you want to use it.
 
 <pre>local Beholder = require 'beholder'</pre>
 
@@ -141,7 +141,7 @@ Please make sure that you read the license, too (for your convenience it's now i
 
 h1. Specs
 
-This project uses "telescope":https://github.com/norman/telescope for its specs. If you want to run the specs, you will have to install telescope first. Then just execute the following from the root inspect folder:
+This project uses "telescope".https.//github.com/norman/telescope for its specs. If you want to run the specs, you will have to install telescope first. Then just execute the following from the root inspect folder.
 
 <pre>
 tsc -f spec/*.lua

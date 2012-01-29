@@ -4,23 +4,23 @@ local beholder = require 'beholder'
 describe("Acceptance", function()
 
   before(function()
-    beholder:reset()
+    beholder.reset()
   end)
 
   test("Normal behavior", function()
 
     local counter = 0
 
-    local id = beholder:observe("EVENT", function() counter = counter + 1 end)
+    local id = beholder.observe("EVENT", function() counter = counter + 1 end)
 
-    beholder:trigger("EVENT")
-    beholder:trigger("EVENT")
+    beholder.trigger("EVENT")
+    beholder.trigger("EVENT")
 
     assert_equal(counter, 2)
 
-    beholder:stopObserving(id)
+    beholder.stopObserving(id)
 
-    beholder:trigger("EVENT")
+    beholder.trigger("EVENT")
 
     assert_equal(counter, 2)
 
@@ -30,24 +30,24 @@ describe("Acceptance", function()
 
     local counter1, counter2 = 0,0
 
-    local id1 = beholder:observe("EVENT", function() counter1 = counter1 + 1 end)
-    local id2 = beholder:observe("EVENT", function() counter2 = counter2 + 1 end)
+    local id1 = beholder.observe("EVENT", function() counter1 = counter1 + 1 end)
+    local id2 = beholder.observe("EVENT", function() counter2 = counter2 + 1 end)
 
-    beholder:trigger("EVENT")
-    beholder:trigger("EVENT")
+    beholder.trigger("EVENT")
+    beholder.trigger("EVENT")
 
     assert_equal(counter1, 2)
     assert_equal(counter2, 2)
 
-    beholder:stopObserving(id1)
+    beholder.stopObserving(id1)
 
-    beholder:trigger("EVENT")
+    beholder.trigger("EVENT")
     assert_equal(counter1, 2)
     assert_equal(counter2, 3)
 
-    beholder:stopObserving(id2)
+    beholder.stopObserving(id2)
 
-    beholder:trigger("EVENT")
+    beholder.trigger("EVENT")
     assert_equal(counter1, 2)
     assert_equal(counter2, 3)
 
@@ -59,17 +59,17 @@ describe("Acceptance", function()
     local enterPressed = false
     local escapePressed = false
 
-    beholder:observe("KEYPRESS", function() counter = counter + 1 end)
-    beholder:observe("KEYPRESS", function(key) lastKey = key end)
-    beholder:observe("KEYPRESS", "enter", function() enterPressed = true end)
+    beholder.observe("KEYPRESS", function() counter = counter + 1 end)
+    beholder.observe("KEYPRESS", function(key) lastKey = key end)
+    beholder.observe("KEYPRESS", "enter", function() enterPressed = true end)
 
-    beholder:trigger("KEYPRESS", "space")
+    beholder.trigger("KEYPRESS", "space")
     assert_equal(counter, 1)
     assert_equal(lastKey, "space")
     assert_false(enterPressed)
     assert_false(escapePressed)
 
-    beholder:trigger("KEYPRESS", "enter")
+    beholder.trigger("KEYPRESS", "enter")
     assert_equal(counter, 2)
     assert_equal(lastKey, "enter")
     assert_true(enterPressed)
@@ -79,18 +79,18 @@ describe("Acceptance", function()
   test("nil events", function()
     local counter = 0
 
-    local id = beholder:observe(function(_, x) counter = counter + x end)
+    local id = beholder.observe(function(_, x) counter = counter + x end)
 
-    beholder:trigger("FOO", 1)
-    beholder:trigger("BAR", 2)
+    beholder.trigger("FOO", 1)
+    beholder.trigger("BAR", 2)
 
     assert_equal(3, counter)
 
-    beholder:stopObserving(id)
+    beholder.stopObserving(id)
 
-    beholder:observe(function() counter = 10 end)
+    beholder.observe(function() counter = 10 end)
 
-    beholder:trigger()
+    beholder.trigger()
 
     assert_equal(10, counter)
   end)
@@ -99,15 +99,15 @@ describe("Acceptance", function()
     local even = 0
     local uneven = 1
 
-    beholder:observe("EVEN", function(x) even = even + 2*x end)
-    beholder:observe("UNEVEN", function(x) uneven = uneven + 2*x end)
+    beholder.observe("EVEN", function(x) even = even + 2*x end)
+    beholder.observe("UNEVEN", function(x) uneven = uneven + 2*x end)
 
-    beholder:triggerAll(1)
+    beholder.triggerAll(1)
 
     assert_equal(even, 2)
     assert_equal(uneven, 3)
 
-    beholder:triggerAll(2)
+    beholder.triggerAll(2)
 
     assert_equal(even, 6)
     assert_equal(uneven, 7)
