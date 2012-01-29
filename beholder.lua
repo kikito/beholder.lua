@@ -11,6 +11,14 @@ local function copy(t)
   return c
 end
 
+local function hash2array(t)
+  local arr, i = {}, 0
+  for _,v in pairs(t) do
+    i = i+1
+    arr[i] = v
+  end
+  return arr, i
+end
 -- private Node class
 
 local nodesById = nil
@@ -43,12 +51,12 @@ local function findOrCreateDescendantNode(self, keys)
 end
 
 local function invokeNodeCallbacks(self, params)
-  local counter = 0
-  for _,callback in pairs(self.callbacks) do
-    callback(unpack(params))
-    counter = counter + 1
+  -- copy the hash into an array, for safety (self-erasures)
+  local callbacks, count = hash2array(self.callbacks)
+  for i=1,#callbacks do
+    callbacks[i](unpack(params))
   end
-  return counter
+  return count
 end
 
 local function invokeAllNodeCallbacksInSubTree(self, params)
