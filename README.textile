@@ -88,41 +88,41 @@ Events can be any type of Lua object. On the example, we used the "PAUSE" string
 
 Composed events are built from more than one lua object. You can do them by simply adding more parameters to the observe/trigger functions. For example, this trigger.
 
-<pre>Beholder.trigger('PLAYERDETECTION', player1, 100, 200)</pre>
+<pre>beholder.trigger('PLAYERDETECTION', player1, 100, 200)</pre>
 
 Will trigger this action.
 
-<pre>Beholder.observe('PLAYERDETECTION', player1, 100, 200, function() print("player1 detected at 100, 200") end)</pre>
+<pre>beholder.observe('PLAYERDETECTION', player1, 100, 200, function() print("player1 detected at 100, 200") end)</pre>
 
 Composed events are inclusive. This means that this other observer will also get activated by the aforementioned trigger.
 
-<pre>Beholder.observe('PLAYERDETECTION', player1, function(x,y) print("player1 detected at ",x,y)</pre>
+<pre>beholder.observe('PLAYERDETECTION', player1, function(x,y) print("player1 detected at ",x,y)</pre>
 
 Notice that the two "non-observed integers" will be passed to the callback as additional parameters. That second action will be executed any time player1 is detected, no matter what coordinates.
 
 Similarly, you can add an action that will be triggered for any player detection.
 
-<pre>Beholder.observe('PLAYERDETECTION', function(player,x,y) print(player.no," detected at ",x,y)</pre>
+<pre>beholder.observe('PLAYERDETECTION', function(player,x,y) print(player.no," detected at ",x,y)</pre>
 
 h1. The nil event
 
 If you want to detect all signals raised (i.e. for logging and debugging) you can do so by observing the "empty" event - simply pass a function to observe, without adding any more params.
 
-<pre>Beholder.observe(function(...) log("Event triggered", ...) end)</pre>
+<pre>beholder.observe(function(...) log("Event triggered", ...) end)</pre>
 
 A quick and dirty way of dumping all events in the standard output is just observing the nil event with @print@.
 
-<pre>Beholder.observe(print)</pre>
+<pre>beholder.observe(print)</pre>
 
 If you want to trigger the events attached only to the nil event, you can do so by calling trigger without params.
 
-<pre>Beholder.trigger()</pre>
+<pre>beholder.trigger()</pre>
 
 h1. Triggering all callbacks
 
 You can use the @triggerAll@ method to trigger all observed events (this will be useful mostly for debugging).
 
-<pre>Beholder.triggerAll(...)</pre>
+<pre>beholder.triggerAll(...)</pre>
 
 Note that you can pass parameters to @triggerAll@. These will be passed to all callbacks (make sure that they are prepared for this, or you will get errors).
 
@@ -131,9 +131,9 @@ h1. Installation
 
 Just copy the beholder.lua file wherever you want it (for example on a lib/ folder). Then write this in any Lua file where you want to use it.
 
-<pre>local Beholder = require 'beholder'</pre>
+<pre>local beholder = require 'beholder'</pre>
 
-On this example I've assigned it to a local variable. If you are going to use Beholder across multiple files, it's better to require the file just once and make the variable global.
+On this example I've assigned it to a local variable. If you are going to use beholder across multiple files, it's better to require the file just once and make the variable global.
 
 The @package.path@ variable must be configured so that the folder in which beholder.lua is copied is available, of course.
 
