@@ -7,7 +7,7 @@ describe("Acceptance", function()
     beholder.reset()
   end)
 
-  test("Normal behavior", function()
+  test("Basic behavior", function()
 
     local counter = 0
 
