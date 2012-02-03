@@ -11,21 +11,18 @@ local function copy(t)
   return c
 end
 
-local function hash2array(t)
-  local arr, i = {}, 0
-  for _,v in pairs(t) do
-    i = i+1
-    arr[i] = v
-  end
-  return arr, i
-end
+
 -- private Node class
 
 local nodesById = nil
 local root = nil
 
 local function newNode()
-  return { callbacks = {}, children = setmetatable({}, {__mode="k"}) }
+  return {
+    callbacks        = {},
+    subjectCallbacks = setmetatable({}, {__mode="k"}),
+    children         = setmetatable({}, {__mode="k"})
+  }
 end
 
 local function initialize()
@@ -42,6 +39,23 @@ local function findOrCreateChildNode(self, key)
   return self.children[key]
 end
 
+-- Returns an array containing all the callbacks to be invoked in a node, making a copy.
+-- This ensures safety on self-erasures (buttons that make themselves stopping observing onclick when clicked)
+local function getNodeCallbacksList(self)
+  local arr, i = {}, 0
+  for _,c in pairs(self.callbacks) do
+    i = i+1
+    arr[i] = c
+  end
+  for _,subjectCallbacks in pairs(self.subjectCallbacks) do
+    for _,c in pairs(subjectCallbacks) do
+      i = i+1
+      arr[i] = c
+    end
+  end
+  return arr, i
+end
+
 local function findOrCreateDescendantNode(self, keys)
   local node = self
   for i=1, #keys do
@@ -51,8 +65,7 @@ local function findOrCreateDescendantNode(self, keys)
 end
 
 local function invokeNodeCallbacks(self, params)
-  -- copy the hash into an array, for safety (self-erasures)
-  local callbacks, count = hash2array(self.callbacks)
+  local callbacks, count = getNodeCallbacksList(self)
   for i=1,#callbacks do
     callbacks[i](unpack(params))
   end
@@ -89,8 +102,21 @@ local function addCallbackToNode(self, callback)
   return id
 end
 
+local function addSubjectCallbackToNode(self, subject, callback)
+  local id = {}
+  self.subjectCallbacks[subject] = self.subjectCallbacks[subject] or {}
+  self.subjectCallbacks[subject][id] = callback
+  nodesById[id] = self
+  return id
+end
+
 local function removeCallbackFromNode(self, id)
   self.callbacks[id] = nil
+  nodesById[id] = nil
+end
+
+local function removeCallbackFromSubject(self, subject, id)
+  self.subjectCallbacks[subject][id] = nil
   nodesById[id] = nil
 end
 
@@ -125,7 +151,7 @@ function beholder.observeSubject(subject, ...)
   assert(subject ~= nil, "Subject was nil. Please provide a valid subject")
   local event, callback = extractEventAndCallbackFromParams({...})
   local node = findOrCreateDescendantNode(root, event)
-  return addCallbackToNode(node, callback)
+  return addSubjectCallbackToNode(node, subject, callback)
 end
 
 function beholder.stopObserving(id)
