@@ -26,6 +26,26 @@ describe("Acceptance", function()
 
   end)
 
+  test("Observing subjects", function()
+    local counter = 0
+    local button = {}
+
+    beholder.observeSubject(button, "EVENT", function() counter = counter + 1 end)
+
+    beholder.trigger("EVENT")
+    beholder.trigger("EVENT")
+
+    assert_equal(2, counter)
+
+    button = nil
+    collectgarbage("collect")
+
+    beholder.trigger("EVENT")
+
+    assert_equal(2, counter)
+
+  end)
+
   test("several actions on the same event", function()
 
     local counter1, counter2 = 0,0

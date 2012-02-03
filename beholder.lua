@@ -121,6 +121,13 @@ function beholder.observe(...)
   return addCallbackToNode(node, callback)
 end
 
+function beholder.observeSubject(subject, ...)
+  assert(subject ~= nil, "Subject was nil. Please provide a valid subject")
+  local event, callback = extractEventAndCallbackFromParams({...})
+  local node = findOrCreateDescendantNode(root, event)
+  return addCallbackToNode(node, callback)
+end
+
 function beholder.stopObserving(id)
   local node = findNodeById(id)
   if not node then return false end
