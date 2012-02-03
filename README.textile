@@ -2,7 +2,7 @@ h1. beholder.lua
 
 A simple event observer for Lua.
 
-h1. Example
+h2. Example
 
 <pre>
 beholder = require 'beholder'
@@ -44,7 +44,7 @@ end
 
 (Note. if you are doing lots of that "if whatever.state then ..." you might want to give a look to "stateful.lua".http.//github.com/kikito/stateful.lua )
 
-h1. Why?
+h2. Why?
 
 This library tries to solve the following problem. some actions need to be executed when some asynchronous condition is fulfilled. By "asyncronous" we mean that it something that typically doesn't depend on the code. Hence precalculating it beforehand is impractical.
 
@@ -72,7 +72,57 @@ This library allows you to build "walls" between them. your keyboard code will j
 
 You can obviously attach any number of observers to any given event. Similarly, you are
 
-h1. Halting event observation
+
+h2. Events in beholder
+
+h3. Observing subjects
+
+A very common situation in programming is that you want to attach observations and events to a particular subject: for example, you want a button to observe a mouseclick, but only until that button is garbage-collected.
+
+Having to store the @id@ of the observed button and using it to call @beholder.stopObserving(id)@ when the button is destroyed is tiresome and clunky:
+
+<pre>
+  local button = buildAButton(callback)
+  local id = beholder.observe('mouseclick', function(x,y)
+    if isInside(button, x, y) then
+      callback()
+    end
+  end)
+
+  ...
+
+  beholder.stopObserving(id)
+  button = nil
+</pre>
+
+It would be much better if beholder provided a way to "observe events while an object exists", and cancelling those observations automatically when the object stops existing.
+
+This is possible through the @beholder.observeSubject@ method:
+
+<pre>
+  local button = buildAButton(callback)
+  beholder.observeSubject(button, 'mouseclick', function(x,y)
+    if isInside(button, x, y) then
+      callback()
+    end
+  end)
+
+  ...
+
+  button = nil
+</pre>
+
+Notice that beholder relies on weak tables and the garbage collector in order to clean up unused references.
+
+If you need to make sure that unused references are collected before triggering an event, invoke the garbage collector manualy:
+
+<pre>
+  collectgarbage('collect') -- this makes beholder "forget" any remove buttons
+  beholder.trigger('mouseclick', 100, 200)
+</pre>
+
+
+h3. Halting event observation
 
 Every call to @beholder.observe@ returns an identifier which can be stored.
 
@@ -82,7 +132,9 @@ That identifier can be used to cancel the observation at any moment. You can do 
 
 <pre>beholder.stopObserving(id)</pre>
 
-h1. Composed events
+Another option is using @beholder.observeSubject@ and relying on the Garbage Collector as suggested above.
+
+h3. Composed events
 
 Events can be any type of Lua object. On the example, we used the "PAUSE" string. It could also be a number, a function or a table. The == operator is used in all cases.
 
@@ -104,7 +156,7 @@ Similarly, you can add an action that will be triggered for any player detection
 
 <pre>beholder.observe('PLAYERDETECTION', function(player,x,y) print(player.no," detected at ",x,y)</pre>
 
-h1. The nil event
+h3. The nil event
 
 If you want to detect all signals raised (i.e. for logging and debugging) you can do so by observing the "empty" event - simply pass a function to observe, without adding any more params.
 
@@ -118,7 +170,7 @@ If you want to trigger the events attached only to the nil event, you can do so 
 
 <pre>beholder.trigger()</pre>
 
-h1. Triggering all callbacks
+h3. Triggering all callbacks
 
 You can use the @triggerAll@ method to trigger all observed events (this will be useful mostly for debugging).
 
@@ -127,7 +179,8 @@ You can use the @triggerAll@ method to trigger all observed events (this will be
 Note that you can pass parameters to @triggerAll@. These will be passed to all callbacks (make sure that they are prepared for this, or you will get errors).
 
 
-h1. Installation
+
+h2. Installation
 
 Just copy the beholder.lua file wherever you want it (for example on a lib/ folder). Then write this in any Lua file where you want to use it.
 
@@ -139,7 +192,7 @@ The @package.path@ variable must be configured so that the folder in which behol
 
 Please make sure that you read the license, too (for your convenience it's now included at the beginning of the beholder.lua file).
 
-h1. Specs
+h2. Specs
 
 This project uses "telescope".https.//github.com/norman/telescope for its specs. If you want to run the specs, you will have to install telescope first. Then just execute the following from the root inspect folder.
 
