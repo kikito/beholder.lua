@@ -126,6 +126,28 @@ You can use the @triggerAll@ method to trigger all observed events (this will be
 
 Note that you can pass parameters to @triggerAll@. These will be passed to all callbacks (make sure that they are prepared for this, or you will get errors).
 
+h1. Groups of events
+
+Sometimes it makes sense to group several events together, so they can be easily discarded.
+
+You can use the @group@ method to do just that.
+
+On the following example, @movePlayerUp/Down/Left/Right@ are functions defined elsewhere.
+
+<pre> local player = {} -- player could be any Lua object
+
+...
+
+beholder.group(player, function()
+  beholder.observe("up",    movePlayerUp)
+  beholder.observe("down",  movePlayerDown)
+  beholder.observe("left",  movePlayerLeft)
+  beholder.observe("right", movePlayerRight)
+end)</pre>
+
+Once these observations are setup, you can stop observing them in a single line:
+
+<pre>beholder.stopObserving(player)</pre>
 
 h1. Installation
 
