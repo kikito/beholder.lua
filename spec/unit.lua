@@ -92,7 +92,7 @@ describe("Unit", function()
       assert_equal(counter, 6)
     end)
 
-    it("does not raise an error when stopping observing an inexisting event", function()
+    it("does not raise an error when stopping observing an inexisting event or group", function()
       assert_not_error(function() beholder.stopObserving({}) end)
     end)
 
@@ -100,9 +100,23 @@ describe("Unit", function()
       assert_equal(false, beholder.stopObserving({}))
     end)
 
+    it("returns false when there was a group, but it had no action", function()
+      local group = {}
+      beholder.group(group, function() end)
+      assert_equal(false, beholder.stopObserving(group))
+    end)
+
     it("returns true when an action was found and removed", function()
       local id = beholder.observe("X", function() end)
       assert_true(beholder.stopObserving(id))
+    end)
+
+    it("returns true when at least one action from a group was removed", function()
+      local group = {}
+      beholder.group(group, function()
+        beholder.observe("X", function() end)
+      end)
+      assert_true(beholder.stopObserving(group))
     end)
 
   end)
@@ -160,4 +174,37 @@ describe("Unit", function()
       assert_equal(2, beholder.triggerAll())
     end)
   end)
+
+  describe(".group", function()
+    it("throws an error when nested", function()
+      assert_error(function()
+        beholder.group({}, function()
+          beholder.group({}, function()
+          end)
+        end)
+      end)
+    end)
+
+    it("creates a group of events that can be cancelled", function()
+      local counter = 0
+      local increment = function() counter = counter + 1 end
+      local group  = {}
+      beholder.group(group, function()
+        beholder.observe("X", increment)
+        beholder.observe("Y", increment)
+      end)
+      beholder.trigger("X")
+      beholder.trigger("Y")
+      assert_equal(2, counter)
+
+      beholder.stopObserving(group)
+
+      beholder.trigger("X")
+      beholder.trigger("Y")
+      assert_equal(2, counter)
+    end)
+  end)
+
+
+
 end)

@@ -114,5 +114,28 @@ describe("Acceptance", function()
 
   end)
 
+  test("groups", function()
+
+    local group = {}
+    local up = 0
+
+    beholder.group(group, function()
+      beholder.observe("UP", function()
+        up = up + 1
+      end)
+    end)
+
+    beholder.trigger("UP")
+
+    assert_equal(1, up)
+
+    beholder.stopObserving(group)
+
+    beholder.trigger("UP")
+
+    assert_equal(1, up)
+
+  end)
+
 
 end)
