@@ -103,7 +103,7 @@ local currentGroupId = nil
 
 local function addIdToCurrentGroup(id)
   if currentGroupId then
-    groups[currentGroupId] = groups[currentGroupId] or {}
+    groups[currentGroupId] = groups[currentGroupId] or setmetatable({}, {__mode="k"})
     local group = groups[currentGroupId]
     group[#group + 1] = id
   end
