@@ -1,4 +1,4 @@
--- beholder.lua - v2.0.1 (2011-11)
+-- beholder.lua - v2.1.1 (2011-11)
 
 -- Copyright (c) 2011 Enrique García Cota
 -- Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -28,10 +28,6 @@ local function newNode()
   return { callbacks = {}, children = setmetatable({}, {__mode="k"}) }
 end
 
-local function initialize()
-  root = newNode()
-  nodesById = setmetatable({}, {__mode="k"})
-end
 
 local function findNodeById(id)
   return nodesById[id]
@@ -100,7 +96,27 @@ end
 local beholder = {}
 
 
--- beholder private functions
+-- beholder private functions/vars
+
+local groups = nil
+local currentGroupId = nil
+
+local function addIdToCurrentGroup(id)
+  if currentGroupId then
+    groups[currentGroupId] = groups[currentGroupId] or setmetatable({}, {__mode="k"})
+    local group = groups[currentGroupId]
+    group[#group + 1] = id
+  end
+  return id
+end
+
+local function stopObservingGroup(group)
+  local count = #group
+  for i=1,count do
+    beholder.stopObserving(group[i])
+  end
+  return count
+end
 
 local function falseIfZero(n)
   return n > 0 and n
@@ -118,14 +134,24 @@ end
 function beholder.observe(...)
   local event, callback = extractEventAndCallbackFromParams({...})
   local node = findOrCreateDescendantNode(root, event)
-  return addCallbackToNode(node, callback)
+  return addIdToCurrentGroup(addCallbackToNode(node, callback))
 end
 
 function beholder.stopObserving(id)
   local node = findNodeById(id)
-  if not node then return false end
-  removeCallbackFromNode(node, id)
-  return true
+  if node then removeCallbackFromNode(node, id) end
+
+  local group, count = groups[id], 0
+  if group then count = stopObservingGroup(group) end
+
+  return (node or count > 0) and true or false
+end
+
+function beholder.group(groupId, f)
+  assert(not currentGroupId, "beholder.group can not be nested!")
+  currentGroupId = groupId
+  f()
+  currentGroupId = nil
 end
 
 function beholder.trigger(...)
@@ -137,9 +163,12 @@ function beholder.triggerAll(...)
 end
 
 function beholder.reset()
-  initialize()
+  root = newNode()
+  nodesById = setmetatable({}, {__mode="k"})
+  groups = {}
+  currentGroupId = nil
 end
 
-initialize()
+beholder.reset()
 
 return beholder

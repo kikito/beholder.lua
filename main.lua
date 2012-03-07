@@ -33,8 +33,8 @@ function move(entity, dt)
   if not entity.paused then
     for dir,delta in pairs(directions) do
       if entity.want[dir] then
-        entity.x = entity.x + delta.dx * entity.speed
-        entity.y = entity.y + delta.dy * entity.speed
+        entity.x = entity.x + delta.dx * entity.speed * dt
+        entity.y = entity.y + delta.dy * entity.speed * dt
       end
     end
   end
@@ -51,7 +51,7 @@ end
 
 function draw(entity)
   love.graphics.setColor(unpack(entity.color))
-  love.graphics.rectangle("line", entity.x, entity.y, 16, 16)
+  love.graphics.rectangle("line", math.floor(entity.x), math.floor(entity.y), 16, 16)
 end
 
 function relativePosition(entity)
@@ -103,7 +103,7 @@ function createPlayer()
     y = 300,
     want={},
     color = {200,200,50},
-    speed = 2
+    speed = 20
   }
   setmetatable(player, {__tostring = function(t) return 'player' end})
   for dir,_ in pairs(directions) do
@@ -123,7 +123,7 @@ function createZombie()
     y = math.random(20,580),
     want = {},
     color = {50,150,50},
-    speed = math.max(math.random()/2, 0.4),
+    speed = 10 + math.random(5),
     target = player
   }
   setmetatable(zombie, {__tostring = function(t) return 'zombie' end})
@@ -163,7 +163,7 @@ end
 
 function love.update(dt)
   all(zombies,chooseDirection)
-  all(entities,move)
+  all(entities,move,dt)
   all(zombies,checkCollision,player)
   all(zombies,checkCollision,mine)
   allWithIndex(zombies, removeIfDead)
