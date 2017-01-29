@@ -49,8 +49,10 @@ end
 local function invokeNodeCallbacks(self, params)
   -- copy the hash into an array, for safety (self-erasures)
   local callbacks, count = hash2array(self.callbacks)
+  self.stop_propagation = false
   for i=1,#callbacks do
     callbacks[i](unpack(params))
+    if self.stop_propagation then break end
   end
   return count
 end
@@ -135,6 +137,13 @@ function beholder.observe(...)
   local event, callback = extractEventAndCallbackFromParams({...})
   local node = findOrCreateDescendantNode(root, event)
   return addIdToCurrentGroup(addCallbackToNode(node, callback))
+end
+
+-- When called the event will stop and no longer propagate
+-- (i.e. loop at invokeNodeCallbacks will break)
+function beholder.stopPropagation(id)
+  local node = findNodeById(id)
+  node.stop_propagation = true
 end
 
 function beholder.stopObserving(id)
